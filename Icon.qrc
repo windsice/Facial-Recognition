@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/Main">
+        <file>searching33.png</file>
+        <file>Apps-Camera-B-icon.png</file>
+        <file>Settings-icon.png</file>
+    </qresource>
+</RCC>
