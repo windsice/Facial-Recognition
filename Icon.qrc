@@ -3,5 +3,10 @@
         <file>searching33.png</file>
         <file>Apps-Camera-B-icon.png</file>
         <file>Settings-icon.png</file>
+        <file>Administrator-icon.png</file>
+        <file>diaphragm2.png</file>
+        <file>focusing.png</file>
+        <file>Actions-go-back-icon.png</file>
+        <file>Actions-go-next-icon.png</file>
     </qresource>
 </RCC>

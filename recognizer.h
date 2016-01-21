@@ -18,6 +18,7 @@
 #include "opencv2/highgui/highgui.hpp"
 
 #include "detector.h"
+#include "ui_livefacial.h"
 
 #include <iostream>
 #include <fstream>
@@ -91,12 +92,26 @@ private slots:
 
     void on_ClassifierDuration_valueChanged(int arg1);
 
-    void on_tabWidget_currentChanged(int index);
+    void on_pushButton_liveFacial_clicked();
+
+    void on_pushButton_stillFacial_clicked();
+
+    void on_pushButton_stillObject_clicked();
+
+    void on_pushButton_action_clicked();
+
+    void on_pushButton_setting_clicked();
 
 protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
+    //change layout based on the operation
+    void onOpSel();
+
+    //perform operation based on the settings
+    void onAction();
+
     void Training();
     void Initialization();
     void SaveSettings();
@@ -127,6 +142,8 @@ private:
     vector<Mat> images;
     vector<int> labels;
     Detector *detector;
+
+    int StackWidgetIndex;
 };
 
 #endif // RECOGNIZER_H

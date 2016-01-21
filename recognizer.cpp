@@ -10,6 +10,7 @@ Recognizer::Recognizer(QWidget *parent) :
     settingsUI->setupUi(this);
     LoadSettings();
     Initialization();
+    onOpSel();
 }
 
 Recognizer::~Recognizer()
@@ -17,6 +18,59 @@ Recognizer::~Recognizer()
     delete statProgress;
     delete detector;
     delete settingsUI;
+}
+
+//turn visibility based on user's intended operation
+void Recognizer::onOpSel(){
+
+    settingsUI->groupBox_CamSet->setVisible(false);
+    settingsUI->groupBox_preparation->setVisible(false);
+    settingsUI->groupBox_ObjDet->setVisible(false);
+    settingsUI->groupBox_FacialRec->setVisible(false);
+    settingsUI->groupBox_prediction->setVisible(false);
+
+    if(settingsUI->pushButton_liveFacial->isChecked()){
+
+        settingsUI->groupBox_CamSet->setVisible(true);
+        settingsUI->groupBox_preparation->setVisible(true);
+        settingsUI->groupBox_ObjDet->setVisible(true);
+        settingsUI->groupBox_FacialRec->setVisible(true);
+
+    } else if(settingsUI->pushButton_stillFacial->isChecked()){
+
+        settingsUI->groupBox_preparation->setVisible(true);
+        settingsUI->groupBox_ObjDet->setVisible(true);
+        settingsUI->groupBox_FacialRec->setVisible(true);
+        settingsUI->groupBox_prediction->setVisible(true);
+        
+    } else if(settingsUI->pushButton_stillObject->isChecked()){
+
+        settingsUI->groupBox_preparation->setVisible(true);
+        settingsUI->groupBox_ObjDet->setVisible(true);
+    }
+}
+
+void Recognizer::onAction(){
+    settingsUI->stackedWidget->setCurrentIndex(StackWidgetIndex);
+    if(StackWidgetIndex == 0)
+    {
+        detector->setCameraDevice(settingsUI->CameraNumber->value());
+        detector->setModels(settingsUI->LBPH_checkBox->isChecked(),LBPHModel,settingsUI->EigenFace_checkBox->isChecked(),EigenFaceModel,settingsUI->FisherFace_checkBox->isChecked(),FisherFaceModel);
+        detector->setImageHeight(img_height);
+        detector->setImageWidth(img_width);
+        try{
+        detector->setClassifier(ClassifierPath);
+        } catch( Exception e)
+        {
+            QMessageBox::critical(this,"Error","Missing Classifier, No facial detection will be provided");
+        }
+
+        detector->Capturing();
+    }
+    else
+    {
+        detector->Stop();
+    }
 }
 
 void Recognizer::Initialization()
@@ -43,15 +97,12 @@ void Recognizer::Initialization()
 
     //For Camera widget
     detector = new Detector(this);
-    settingsUI->tabWidget->insertTab(CAMERATAB,detector,"Camera");
-    QPalette Pal;
-    Pal.setColor(QPalette::Background,Qt::black);
-    settingsUI->tabWidget->widget(CAMERATAB)->setAutoFillBackground(true);
-    settingsUI->tabWidget->widget(CAMERATAB)->setPalette(Pal);
-    settingsUI->CameraUpdateTime->setValue(CAMERAUPDATETIME);
-    settingsUI->ClassifierDuration->setValue(CLASSIFIERDURATION);
+    settingsUI->stackedWidget->insertWidget(0,detector);
+    settingsUI->pushButton_setting->setVisible(false);
+
 
     img_height = img_width = 0;
+    StackWidgetIndex = 1;
 }
 
 Mat Recognizer::norm_0_255(InputArray _src) {
@@ -333,12 +384,12 @@ void Recognizer::on_LBPH_checkBox_clicked(bool checked)
     {
         settingsUI->LBPH_lineEdit->setEnabled(true);
         settingsUI->LBPH_toolButton->setEnabled(true);
-        settingsUI->Update_groupBox->setEnabled(true);
+        settingsUI->groupBox_LBPHupdate->setVisible(true);
     }else
     {
         settingsUI->LBPH_lineEdit->setEnabled(false);
         settingsUI->LBPH_toolButton->setEnabled(false);
-        settingsUI->Update_groupBox->setEnabled(false);
+        settingsUI->groupBox_LBPHupdate->setVisible(false);
     }
     AlgorithmChecked();
 }
@@ -549,8 +600,6 @@ void Recognizer::on_TrainNew_pushButton_clicked()
 void Recognizer::resizeEvent(QResizeEvent *event)
 {
     event->accept();
-    if(!settingsUI->tabWidget->currentIndex() == CAMERATAB)
-        detector->AdjustSize(settingsUI->tabWidget->size());
 }
 
 void Recognizer::on_CameraUpdateTime_valueChanged(int arg1)
@@ -580,26 +629,33 @@ void Recognizer::on_ClassifierDuration_valueChanged(int arg1)
 }
 
 
-void Recognizer::on_tabWidget_currentChanged(int index)
+void Recognizer::on_pushButton_liveFacial_clicked()
 {
+    onOpSel();
+}
 
-    if(index == 0)
-    {
-        detector->setCameraDevice(settingsUI->CameraNumber->value());
-        detector->setModels(settingsUI->LBPH_checkBox->isChecked(),LBPHModel,settingsUI->EigenFace_checkBox->isChecked(),EigenFaceModel,settingsUI->FisherFace_checkBox->isChecked(),FisherFaceModel);
-        detector->setImageHeight(img_height);
-        detector->setImageWidth(img_width);
-        try{
-        detector->setClassifier(ClassifierPath);
-        } catch( Exception e)
-        {
-            QMessageBox::critical(this,"Error","Missing Classifier, No facial detection will be provided");
-        }
+void Recognizer::on_pushButton_stillFacial_clicked()
+{
+    onOpSel();
+}
 
-        detector->Capturing();
-    }
-    else
-    {
-        detector->Stop();
-    }
+void Recognizer::on_pushButton_stillObject_clicked()
+{
+    onOpSel();
+}
+
+void Recognizer::on_pushButton_action_clicked()
+{
+    settingsUI->pushButton_action->setVisible(false);
+    settingsUI->pushButton_setting->setVisible(true);
+    StackWidgetIndex--;
+    onAction();
+}
+
+void Recognizer::on_pushButton_setting_clicked()
+{
+    settingsUI->pushButton_action->setVisible(true);
+    settingsUI->pushButton_setting->setVisible(false);
+    StackWidgetIndex++;
+    onAction();
 }
