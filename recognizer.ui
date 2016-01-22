@@ -14,7 +14,7 @@
    <string>Recognizer</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="Icon.qrc">
+   <iconset>
     <normaloff>:/Main/searching33.png</normaloff>:/Main/searching33.png</iconset>
   </property>
   <property name="windowOpacity">
@@ -56,7 +56,7 @@
                </property>
                <property name="icon">
                 <iconset>
-                 <normalon>:/Main/Administrator-icon.png</normalon>
+                 <normalon>:/Main/icons/Administrator-icon.png</normalon>
                 </iconset>
                </property>
                <property name="iconSize">
@@ -86,7 +86,7 @@
                </property>
                <property name="icon">
                 <iconset>
-                 <normalon>:/Main/focusing.png</normalon>
+                 <normalon>:/Main/icons/focusing.png</normalon>
                 </iconset>
                </property>
                <property name="iconSize">
@@ -113,7 +113,7 @@
                </property>
                <property name="icon">
                 <iconset>
-                 <normalon>:/Main/diaphragm2.png</normalon>
+                 <normalon>:/Main/icons/diaphragm2.png</normalon>
                 </iconset>
                </property>
                <property name="iconSize">
@@ -621,8 +621,9 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="Icon.qrc">
-          <normaloff>:/Main/Actions-go-back-icon.png</normaloff>:/Main/Actions-go-back-icon.png</iconset>
+         <iconset>
+          <normaloff>:/Main/Actions-go-back-icon.png</normaloff>
+          <normalon>:/Main/icons/Actions-go-back-icon.png</normalon>:/Main/Actions-go-back-icon.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -654,8 +655,9 @@
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="Icon.qrc">
-          <normaloff>:/Main/Actions-go-next-icon.png</normaloff>:/Main/Actions-go-next-icon.png</iconset>
+         <iconset>
+          <normaloff>:/Main/Actions-go-next-icon.png</normaloff>
+          <normalon>:/Main/icons/Actions-go-next-icon.png</normalon>:/Main/Actions-go-next-icon.png</iconset>
         </property>
         <property name="iconSize">
          <size>
@@ -705,8 +707,6 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="Icon.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
