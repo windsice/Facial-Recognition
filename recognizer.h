@@ -17,7 +17,6 @@
 #include "opencv2/highgui/highgui.hpp"
 
 #include "detector.h"
-#include "ui_livefacial.h"
 
 #include <iostream>
 #include <fstream>
