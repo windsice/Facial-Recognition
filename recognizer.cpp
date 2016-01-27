@@ -3,6 +3,15 @@
 #include "QDebug"
 
 
+const QList<QSize> Recognizer::RESOLUTION = QList<QSize> ()
+    << QSize(600,480)
+    << QSize(800,600)
+    << QSize(1024,768)
+    << QSize(1280,1024)
+    << QSize(1680,1050)
+    << QSize(1920,1080)
+    << QSize(2160,1440);
+
 Recognizer::Recognizer(QWidget *parent) :
     QMainWindow(parent),
     settingsUI(new Ui::Recognizer)
@@ -52,19 +61,23 @@ void Recognizer::onOpSel(){
 
 void Recognizer::onAction(){
     settingsUI->stackedWidget->setCurrentIndex(StackWidgetIndex);
-    if(StackWidgetIndex == 0)
+    if(StackWidgetIndex == Recognizer::CAMERATAB)
     {
         detector->setCameraDevice(settingsUI->CameraNumber->value());
+        detector->setCameraResolution(settingsUI->comboBox_CameraResolution->currentData().toSize());
         detector->setModels(settingsUI->LBPH_checkBox->isChecked(),LBPHModel,settingsUI->EigenFace_checkBox->isChecked(),EigenFaceModel,settingsUI->FisherFace_checkBox->isChecked(),FisherFaceModel);
         detector->setImageHeight(img_height);
         detector->setImageWidth(img_width);
-        try{
-        detector->setClassifier(ClassifierPath);
-        } catch( Exception e)
-        {
-            QMessageBox::critical(this,"Error","Missing Classifier, No facial detection will be provided");
+        detector->setUpdatingTime(settingsUI->CameraUpdateTime->value());
+        detector->setClassifierDuration(settingsUI->ClassifierDuration->value());
+        if(!ClassifierPath.isEmpty()){
+            try{
+            detector->setClassifier(ClassifierPath);
+            } catch( Exception e)
+            {
+                QMessageBox::critical(this,"Error","Classifier, Something wrong with the classifier");
+            }
         }
-
         detector->Capturing();
     }
     else
@@ -97,12 +110,22 @@ void Recognizer::Initialization()
 
     //For Camera widget
     detector = new Detector(this);
-    settingsUI->stackedWidget->insertWidget(0,detector);
+    settingsUI->stackedWidget->insertWidget(Recognizer::CAMERATAB,detector);
     settingsUI->pushButton_setting->setVisible(false);
+    QPalette Pal;
+    Pal.setColor(QPalette::Background,Qt::black);
+    settingsUI->stackedWidget->widget(Recognizer::CAMERATAB)->setAutoFillBackground(true);
+    settingsUI->stackedWidget->setPalette(Pal);
 
+    // Camera Resolution
+    foreach(QSize a, RESOLUTION)
+    {
+        QString text = QString::number(a.width()) + " x " + QString::number(a.height());
+        settingsUI->comboBox_CameraResolution->addItem(text,QVariant(a));
+    }
 
     img_height = img_width = 0;
-    StackWidgetIndex = 1;
+    StackWidgetIndex = 0;
 }
 
 Mat Recognizer::norm_0_255(InputArray _src) {
@@ -596,17 +619,6 @@ void Recognizer::on_TrainNew_pushButton_clicked()
     }
 }
 
-
-void Recognizer::resizeEvent(QResizeEvent *event)
-{
-    event->accept();
-}
-
-void Recognizer::on_CameraUpdateTime_valueChanged(int arg1)
-{
-    detector->setUpdatingTime(arg1);
-}
-
 void Recognizer::on_ClassifierLineEdit_textChanged(const QString &arg1)
 {
     ClassifierPath = arg1;
@@ -621,11 +633,6 @@ void Recognizer::on_ClassifierPath_toolButton_clicked()
         ClassifierPath = tempPath;
         settingsUI->ClassifierLineEdit->setText(ClassifierPath);
     }
-}
-
-void Recognizer::on_ClassifierDuration_valueChanged(int arg1)
-{
-    detector->setClassifierDuration(arg1);
 }
 
 
@@ -648,7 +655,7 @@ void Recognizer::on_pushButton_action_clicked()
 {
     settingsUI->pushButton_action->setVisible(false);
     settingsUI->pushButton_setting->setVisible(true);
-    StackWidgetIndex--;
+    StackWidgetIndex++;
     onAction();
 }
 
@@ -656,6 +663,6 @@ void Recognizer::on_pushButton_setting_clicked()
 {
     settingsUI->pushButton_action->setVisible(true);
     settingsUI->pushButton_setting->setVisible(false);
-    StackWidgetIndex++;
+    StackWidgetIndex--;
     onAction();
 }

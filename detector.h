@@ -12,6 +12,7 @@
 #include <QLabel>
 #include <qtconcurrentrun.h>
 #include <QBoxLayout>
+#include <QResizeEvent>
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/contrib/contrib.hpp"
@@ -34,9 +35,13 @@ public:
     explicit Detector(QWidget *parent = 0);
     ~Detector();
 
+protected:
+    void resizeEvent(QResizeEvent *event);
+
 public:
     void setImageWidth(const int&);
     void setImageHeight(const int&);
+    void setCameraResolution(const QSize&);
 
     void setClassifierDuration(const int &);
     void setUpdatingTime(const int&);
@@ -45,7 +50,6 @@ public:
     void setModels(bool aIsUsed, const Ptr<FaceRecognizer> &, bool bIsUsed, const Ptr<FaceRecognizer> &, bool cIsUsed, const Ptr<FaceRecognizer> &);
     bool Capturing();
     void Stop();
-    void AdjustSize(const QSize &newSize);
 
     int getFrameWidth();
     int getFrameHeight();

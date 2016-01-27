@@ -30,6 +30,13 @@ Detector::~Detector()
     delete ui;
 }
 
+void Detector::resizeEvent(QResizeEvent *event)
+{
+    event->accept();
+    ScreenSize = this->size();
+
+}
+
 void Detector::setImageWidth(const int &w)
 {
     img_width = w;
@@ -38,6 +45,15 @@ void Detector::setImageWidth(const int &w)
 void Detector::setImageHeight(const int &h)
 {
     img_height = h;
+}
+
+void Detector::setCameraResolution(const QSize &size){
+
+    if(camera != NULL)
+    {
+        camera->set(CV_CAP_PROP_FRAME_WIDTH,size.width());
+        camera->set(CV_CAP_PROP_FRAME_HEIGHT,size.height());
+    }
 }
 
 void Detector::setClassifierDuration(const int &newtime)
@@ -54,6 +70,7 @@ void Detector::setCameraDevice(const int &n)
 {
     VideoCapture(n).release();
     camera = new VideoCapture(n);
+
 }
 
 void Detector::setClassifier(const QString &path)
@@ -76,6 +93,7 @@ bool Detector::Capturing()
     if(!camera->isOpened())
         return false;
 
+    //set QUI thread to a lower priority, so that image will be processed more frequently
     QThread::currentThread()->setPriority(QThread::IdlePriority);
     startTimers();
     return true;
@@ -87,13 +105,10 @@ void Detector::Stop()
     {
         stopTimers();
         camera->release();
+
+        //set back GUI thread priority.
         QThread::currentThread()->setPriority(QThread::NormalPriority);
     }
-}
-
-void Detector::AdjustSize(const QSize &newSize)
-{
-    ScreenSize = newSize;
 }
 
 int Detector::getFrameWidth()
@@ -162,7 +177,7 @@ void Detector::ProcessFrame()
     }
 
     QImage frameImg((uchar*)frame.data,frame.cols,frame.rows,frame.step,QImage::Format_RGB888);
-    ui->CameraScreen->setPixmap(QPixmap::fromImage(frameImg));
+    ui->CameraScreen->setPixmap(QPixmap::fromImage(frameImg).scaled(ScreenSize,Qt::KeepAspectRatio));
 
     if(capturing_img)
         capturing_img = false;

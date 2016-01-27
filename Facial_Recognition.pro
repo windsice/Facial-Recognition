@@ -23,7 +23,8 @@ LIBS += `pkg-config opencv --libs`
 
 
 HEADERS  += recognizer.h \
-    detector.h
+    detector.h \
+    stilldetection.h
 
 FORMS    += recognizer.ui \
     detector.ui

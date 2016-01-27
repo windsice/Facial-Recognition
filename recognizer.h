@@ -10,7 +10,6 @@
 #include <QProgressBar>
 #include <QThread>
 #include <qtconcurrentrun.h>
-#include <QResizeEvent>
 
 
 #include "opencv2/core/core.hpp"
@@ -44,9 +43,8 @@ public:
     static Mat norm_0_255(InputArray _src);
     void read_csv(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';');
 
-    static const int CAMERATAB = 0;
-    static const int CAMERAUPDATETIME = 100;
-    static const int CLASSIFIERDURATION = 1000;
+    static const int CAMERATAB = 1;
+    static const QList<QSize> RESOLUTION;
 
 private slots:
     void onTrainingObjects(QString type);
@@ -88,10 +86,6 @@ private slots:
     void on_Predict_Button_clicked();
     //******************************************************************
 
-    void on_CameraUpdateTime_valueChanged(int arg1);
-
-    void on_ClassifierDuration_valueChanged(int arg1);
-
     void on_pushButton_liveFacial_clicked();
 
     void on_pushButton_stillFacial_clicked();
@@ -102,8 +96,6 @@ private slots:
 
     void on_pushButton_setting_clicked();
 
-protected:
-    void resizeEvent(QResizeEvent *event);
 
 private:
     //change layout based on the operation

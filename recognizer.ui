@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>834</width>
-    <height>961</height>
+    <height>970</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -56,8 +56,8 @@
                </property>
                <property name="icon">
                 <iconset>
-                 <normalon>:/Main/icons/Administrator-icon.png</normalon>
-                </iconset>
+                 <normaloff>icons/Administrator-icon.png</normaloff>
+                 <normalon>:/Main/icons/Administrator-icon.png</normalon>icons/Administrator-icon.png</iconset>
                </property>
                <property name="iconSize">
                 <size>
@@ -154,6 +154,23 @@
               <widget class="QSpinBox" name="CameraNumber"/>
              </item>
              <item>
+              <widget class="QLabel" name="label_CameraResolution">
+               <property name="text">
+                <string>Resolution</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="comboBox_CameraResolution">
+               <property name="minimumSize">
+                <size>
+                 <width>100</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="horizontalSpacer_3">
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
@@ -183,7 +200,7 @@
                 <number>3000</number>
                </property>
                <property name="value">
-                <number>0</number>
+                <number>10</number>
                </property>
               </widget>
              </item>
@@ -251,6 +268,9 @@
                  <widget class="QSpinBox" name="ClassifierDuration">
                   <property name="maximum">
                    <number>5000</number>
+                  </property>
+                  <property name="value">
+                   <number>1000</number>
                   </property>
                  </widget>
                 </item>
@@ -611,6 +631,13 @@
         <bool>false</bool>
        </property>
       </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
      </widget>
     </item>
     <item>
