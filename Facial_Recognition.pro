@@ -15,7 +15,8 @@ CONFIG += mobility
 MOBILITY = multimedia
 SOURCES += main.cpp\
         recognizer.cpp \
-    detector.cpp
+    detector.cpp \
+    stillobject.cpp
 
 INCLUDEPATH += /usr/local/include/opencv
 LIBS += `pkg-config opencv --libs`
@@ -24,10 +25,12 @@ LIBS += `pkg-config opencv --libs`
 
 HEADERS  += recognizer.h \
     detector.h \
-    stilldetection.h
+    stilldetection.h \
+    stillobject.h
 
 FORMS    += recognizer.ui \
-    detector.ui
+    detector.ui \
+    stillobject.ui
 
 RESOURCES += \
     Icon.qrc

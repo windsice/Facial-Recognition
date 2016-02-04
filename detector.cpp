@@ -21,20 +21,22 @@ Detector::Detector(QWidget *parent) : QWidget(parent), ui(new Ui::Detector)
 
     LoadSettings();
     totalSubjectCount();
+    CameraStarted = false;
 }
 
 Detector::~Detector()
 {
-    delete timer;
-    delete camera;
-    delete ui;
+    if(CameraStarted){
+        delete timer;
+        delete camera;
+        delete ui;
+    }
 }
 
 void Detector::resizeEvent(QResizeEvent *event)
 {
     event->accept();
     ScreenSize = this->size();
-
 }
 
 void Detector::setImageWidth(const int &w)
@@ -70,7 +72,7 @@ void Detector::setCameraDevice(const int &n)
 {
     VideoCapture(n).release();
     camera = new VideoCapture(n);
-
+    CameraStarted = true;
 }
 
 void Detector::setClassifier(const QString &path)
@@ -101,6 +103,9 @@ bool Detector::Capturing()
 
 void Detector::Stop()
 {
+    if(!CameraStarted)
+        return;
+
     if(camera->isOpened())
     {
         stopTimers();

@@ -11,12 +11,12 @@
 #include <QThread>
 #include <qtconcurrentrun.h>
 
-
 #include "opencv2/core/core.hpp"
 #include "opencv2/contrib/contrib.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
 #include "detector.h"
+#include "stillobject.h"
 
 #include <iostream>
 #include <fstream>
@@ -42,7 +42,7 @@ public:
     static Mat norm_0_255(InputArray _src);
     void read_csv(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';');
 
-    static const int CAMERATAB = 1;
+    enum TabIndex { TAB_SETTING,TAB_CAMERA,TAB_STILLOBJECT};
     static const QList<QSize> RESOLUTION;
 
 private slots:
@@ -101,10 +101,11 @@ private:
     void onOpSel();
 
     //perform operation based on the settings
-    void onAction();
+    bool passParaToOp();
 
     void Training();
     void Initialization();
+    void TabsInit();
     void SaveSettings();
     void LoadSettings();
     void AlgorithmChecked();
@@ -133,6 +134,7 @@ private:
     vector<Mat> images;
     vector<int> labels;
     Detector *detector;
+    StillObject *stillObject;
 
     int StackWidgetIndex;
 };

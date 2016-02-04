@@ -107,6 +107,8 @@ private:
     QTimer *timer;
     QTimer *clearFacesTimer;
     Mat gray;
+
+    bool CameraStarted; //unable to find a way to check if camera is null, thus use this flag.
 };
 
 #endif // DETECTOR_H

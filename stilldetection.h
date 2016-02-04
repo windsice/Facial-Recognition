@@ -3,7 +3,6 @@
 
 #include <QString>
 #include <QImage>
-#include <QMessageBox>
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/contrib/contrib.hpp"
@@ -25,8 +24,8 @@ public:
         objects.clear();
         haar_cascade.detectMultiScale(mat_picture_gray,objects);
 
-        for(int i = 0; i < objects.size(); i++){
-            cv.rectangle(mat_picture_original,objects[i],CV_RGB(0,255,0),1);
+        for(unsigned int i = 0; i < objects.size(); i++){
+            cv::rectangle(mat_picture_original,objects[i],CV_RGB(0,255,0),1);
         }
 
         imgForDisplay = new QImage((uchar*)mat_picture_original.data,
@@ -38,25 +37,26 @@ public:
 
     // read image in regular and grayscale mode from the path
     inline void setImage(const QString &ImagePath){
-        mat_picture_original = cv.imread(ImagePath.toStdString());
-        cv.cvtColor(mat_picture_original,mat_picture_gray,CV_BGR2GRAY);
+        mat_picture_original = cv::imread(ImagePath.toStdString());
+        cv::cvtColor(mat_picture_original,mat_picture_gray,CV_BGR2GRAY);
     }
 
     // this step is necessary for detection, which tells the machince how does the object looks like.
-    inline void setClassifier(const QString &ClassifierPath){
+    inline bool setClassifier(const QString &ClassifierPath){
         try{
             haar_cascade.load(ClassifierPath.toStdString());
+            return true;
         } catch (...) {
-            QMessageBox::critical(this,"Classifier","Cannot load classifier");
+            return false;
         }
     }
 
 protected:
-    CascadeClassifier haar_cascade;     //holding the graphical characteristic of the object.
-    vector< Rect_<int> > objects;       //holding the positions of detected objects.
-    Mat mat_picture_original;           //Image that we want to perform detection on.
-    Mat mat_picture_gray;               //A matrix that holds graymode of the picture is needed for detection
-    QImage *imgForDisplay;
+    cv::CascadeClassifier haar_cascade;     //holding the graphical characteristic of the object.
+    vector< cv::Rect_<int> > objects;       //holding the positions of detected objects.
+    cv::Mat mat_picture_original;           //Image that we want to perform detection on.
+    cv::Mat mat_picture_gray;               //A matrix that holds graymode of the picture is needed for detection.
+    QImage *imgForDisplay = NULL;
 
 };
 

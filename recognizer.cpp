@@ -2,7 +2,6 @@
 #include "ui_recognizer.h"
 #include "QDebug"
 
-
 const QList<QSize> Recognizer::RESOLUTION = QList<QSize> ()
     << QSize(600,480)
     << QSize(800,600)
@@ -44,6 +43,7 @@ void Recognizer::onOpSel(){
         settingsUI->groupBox_preparation->setVisible(true);
         settingsUI->groupBox_ObjDet->setVisible(true);
         settingsUI->groupBox_FacialRec->setVisible(true);
+        StackWidgetIndex = TAB_CAMERA;
 
     } else if(settingsUI->pushButton_stillFacial->isChecked()){
 
@@ -51,17 +51,24 @@ void Recognizer::onOpSel(){
         settingsUI->groupBox_ObjDet->setVisible(true);
         settingsUI->groupBox_FacialRec->setVisible(true);
         settingsUI->groupBox_prediction->setVisible(true);
+        StackWidgetIndex = TAB_SETTING;
         
     } else if(settingsUI->pushButton_stillObject->isChecked()){
 
         settingsUI->groupBox_preparation->setVisible(true);
         settingsUI->groupBox_ObjDet->setVisible(true);
+        StackWidgetIndex = TAB_STILLOBJECT;
+    } else {
+        StackWidgetIndex = TAB_SETTING;
     }
 }
 
-void Recognizer::onAction(){
+bool Recognizer::passParaToOp(){
+    if(settingsUI->stackedWidget->currentIndex() == StackWidgetIndex)
+        return false;
+
     settingsUI->stackedWidget->setCurrentIndex(StackWidgetIndex);
-    if(StackWidgetIndex == Recognizer::CAMERATAB)
+    if(StackWidgetIndex == TAB_CAMERA)
     {
         detector->setCameraDevice(settingsUI->CameraNumber->value());
         detector->setCameraResolution(settingsUI->comboBox_CameraResolution->currentData().toSize());
@@ -80,10 +87,15 @@ void Recognizer::onAction(){
         }
         detector->Capturing();
     }
+    else if(StackWidgetIndex == TAB_STILLOBJECT){
+        if(!ClassifierPath.isEmpty())
+            stillObject->setClassifier(ClassifierPath);
+    }
     else
     {
         detector->Stop();
     }
+    return true;
 }
 
 void Recognizer::Initialization()
@@ -108,14 +120,7 @@ void Recognizer::Initialization()
     //For TrainingThread communication
     connect(this,SIGNAL(TrainingObjects(QString)),this,SLOT(onTrainingObjects(QString)));
 
-    //For Camera widget
-    detector = new Detector(this);
-    settingsUI->stackedWidget->insertWidget(Recognizer::CAMERATAB,detector);
-    settingsUI->pushButton_setting->setVisible(false);
-    QPalette Pal;
-    Pal.setColor(QPalette::Background,Qt::black);
-    settingsUI->stackedWidget->widget(Recognizer::CAMERATAB)->setAutoFillBackground(true);
-    settingsUI->stackedWidget->setPalette(Pal);
+    TabsInit();
 
     // Camera Resolution
     foreach(QSize a, RESOLUTION)
@@ -125,7 +130,23 @@ void Recognizer::Initialization()
     }
 
     img_height = img_width = 0;
-    StackWidgetIndex = 0;
+    StackWidgetIndex = TAB_SETTING;
+}
+
+//construct all other tabs
+void Recognizer::TabsInit(){
+    //Camera
+    detector = new Detector(this);
+    settingsUI->stackedWidget->insertWidget(TAB_CAMERA,detector);
+    settingsUI->pushButton_setting->setVisible(false);
+    QPalette Pal;
+    Pal.setColor(QPalette::Background,Qt::black);
+    settingsUI->stackedWidget->widget(TAB_CAMERA)->setAutoFillBackground(true);
+    settingsUI->stackedWidget->setPalette(Pal);
+
+    //stillObject
+    stillObject = new StillObject(this);
+    settingsUI->stackedWidget->insertWidget(TAB_STILLOBJECT,stillObject);
 }
 
 Mat Recognizer::norm_0_255(InputArray _src) {
@@ -527,13 +548,13 @@ void Recognizer::on_LoadTrainedModel_pushButton_clicked()
     statProgress->setValue(100);
 
     try{
-    if(settingsUI->LBPH_checkBox->isChecked())
-        LBPHModel->load(LBPHPath.toStdString());
-    if(settingsUI->EigenFace_checkBox->isChecked())
-        EigenFaceModel->load(EigenFacePath.toStdString());
+        if(settingsUI->LBPH_checkBox->isChecked())
+            LBPHModel->load(LBPHPath.toStdString());
+        if(settingsUI->EigenFace_checkBox->isChecked())
+            EigenFaceModel->load(EigenFacePath.toStdString());
 
-    if(settingsUI->FisherFace_checkBox->isChecked())
-        FisherFaceModel->load(FisherFacePath.toStdString());
+        if(settingsUI->FisherFace_checkBox->isChecked())
+            FisherFaceModel->load(FisherFacePath.toStdString());
     } catch (Exception e)
     {
         QMessageBox::critical(this,"ERROR","Invalid Path");
@@ -653,16 +674,18 @@ void Recognizer::on_pushButton_stillObject_clicked()
 
 void Recognizer::on_pushButton_action_clicked()
 {
-    settingsUI->pushButton_action->setVisible(false);
-    settingsUI->pushButton_setting->setVisible(true);
-    StackWidgetIndex++;
-    onAction();
+    if(passParaToOp()){
+        settingsUI->pushButton_action->setVisible(false);
+        settingsUI->pushButton_setting->setVisible(true);
+    }
 }
 
 void Recognizer::on_pushButton_setting_clicked()
 {
-    settingsUI->pushButton_action->setVisible(true);
-    settingsUI->pushButton_setting->setVisible(false);
-    StackWidgetIndex--;
-    onAction();
+    StackWidgetIndex = TAB_SETTING;
+    if(passParaToOp()){
+        settingsUI->pushButton_action->setVisible(true);
+        settingsUI->pushButton_setting->setVisible(false);
+    }
+    onOpSel();
 }
