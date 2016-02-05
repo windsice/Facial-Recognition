@@ -689,3 +689,4 @@ void Recognizer::on_pushButton_setting_clicked()
     }
     onOpSel();
 }
+

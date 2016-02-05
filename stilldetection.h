@@ -3,6 +3,8 @@
 
 #include <QString>
 #include <QImage>
+#include <QFuture>
+#include <QtConcurrent>
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/contrib/contrib.hpp"
@@ -12,33 +14,26 @@
 
 using namespace std;
 
-class StillDetection{
+class StillDetection {
+
 
 public:
 
     virtual void displayOnGUI() = 0;
 
-    // Perform detection and put rectangle around it.
-    // save the result into Qimage, and ready to display by GUI.
-    void performDetection(){
-        objects.clear();
-        haar_cascade.detectMultiScale(mat_picture_gray,objects);
-
-        for(unsigned int i = 0; i < objects.size(); i++){
-            cv::rectangle(mat_picture_original,objects[i],CV_RGB(0,255,0),1);
-        }
-
-        imgForDisplay = new QImage((uchar*)mat_picture_original.data,
-                                   mat_picture_original.cols,
-                                   mat_picture_original.rows,
-                                   mat_picture_original.step,
-                                   QImage::Format_RGB888);
+    inline void setScaleFactor(const double &sf){
+        scaleFactor = sf;
+    }
+    inline void setMinNeighbors(const int &mN){
+        minNeighbors = mN;
     }
 
     // read image in regular and grayscale mode from the path
     inline void setImage(const QString &ImagePath){
         mat_picture_original = cv::imread(ImagePath.toStdString());
         cv::cvtColor(mat_picture_original,mat_picture_gray,CV_BGR2GRAY);
+        //mat_pictreu_original does not comes in natural color
+        cv::cvtColor(mat_picture_original,mat_picture_original,CV_BGR2RGB);
     }
 
     // this step is necessary for detection, which tells the machince how does the object looks like.
@@ -51,13 +46,17 @@ public:
         }
     }
 
+
+
 protected:
     cv::CascadeClassifier haar_cascade;     //holding the graphical characteristic of the object.
     vector< cv::Rect_<int> > objects;       //holding the positions of detected objects.
     cv::Mat mat_picture_original;           //Image that we want to perform detection on.
     cv::Mat mat_picture_gray;               //A matrix that holds graymode of the picture is needed for detection.
     QImage *imgForDisplay = NULL;
-
+    double scaleFactor;
+    int minNeighbors;
+    QFuture<void> performingThread;
 };
 
 
