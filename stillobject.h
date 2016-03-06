@@ -10,10 +10,18 @@
 #include <QDebug>
 #include <QDirIterator>
 #include <QFileInfo>
+#include <QLabel>
 
 namespace Ui {
 class StillObject;
 }
+
+class label_picture : public QLabel
+{
+protected:
+    void mousePressEvent(QMouseEvent *event);
+};
+
 
 class StillObject : public QWidget, public StillDetection
 {
@@ -39,6 +47,8 @@ private slots:
 
     void on_detectiondone();
 
+    void on_checkBox_ColorCheck_clicked(bool checked);
+
 private:
     void displayOnGUI();
     void updateFolderIterator();
@@ -49,6 +59,7 @@ private:
     QString PicturePath;
     QDirIterator *folderIt = NULL;
 
+    cv::Mat color;
 };
 
 #endif // STILLOBJECT_H

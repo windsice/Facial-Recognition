@@ -8,5 +8,6 @@
         <file>icons/focusing.png</file>
         <file>icons/searching33.png</file>
         <file>icons/Settings-icon.png</file>
+        <file>icons/health-education-icon.png</file>
     </qresource>
 </RCC>

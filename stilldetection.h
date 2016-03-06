@@ -32,8 +32,6 @@ public:
     inline void setImage(const QString &ImagePath){
         mat_picture_original = cv::imread(ImagePath.toStdString());
         cv::cvtColor(mat_picture_original,mat_picture_gray,CV_BGR2GRAY);
-        //mat_pictreu_original does not comes in natural color
-        cv::cvtColor(mat_picture_original,mat_picture_original,CV_BGR2RGB);
     }
 
     // this step is necessary for detection, which tells the machince how does the object looks like.
@@ -54,6 +52,7 @@ protected:
     cv::Mat mat_picture_original;           //Image that we want to perform detection on.
     cv::Mat mat_picture_gray;               //A matrix that holds graymode of the picture is needed for detection.
     QImage *imgForDisplay = NULL;
+    QImage *imgForColorRange = NULL;
     double scaleFactor;
     int minNeighbors;
     QFuture<void> performingThread;
