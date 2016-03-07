@@ -16,13 +16,6 @@ namespace Ui {
 class StillObject;
 }
 
-class label_picture : public QLabel
-{
-protected:
-    void mousePressEvent(QMouseEvent *event);
-};
-
-
 class StillObject : public QWidget, public StillDetection
 {
     Q_OBJECT
@@ -37,6 +30,7 @@ public:
 protected:
     void resizeEvent(QResizeEvent *event);
     void mouseDoubleClickEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event);
 
 private slots:
     void on_toolButton_PictureSelection_clicked();
@@ -51,15 +45,19 @@ private slots:
 
 private:
     void displayOnGUI();
-    void updateFolderIterator();
+    void initFolderIterator();
     void startDetection();
     void performDetection();
+    void resizeProcessedPictures();
+    int ColorBound(const int color);
 
     Ui::StillObject *ui;
     QString PicturePath;
     QDirIterator *folderIt = NULL;
+    cv::Vec3b pixelColorHSV;
 
     cv::Mat color;
 };
+
 
 #endif // STILLOBJECT_H

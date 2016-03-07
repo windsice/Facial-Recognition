@@ -24,10 +24,10 @@ void StillObject::displayOnGUI(){
     setImage(PicturePath);
     startDetection();
     QSize size = ui->label_StillObject->size();
-    ui->label_StillObject->setPixmap(QPixmap(PicturePath).scaled(size,Qt::KeepAspectRatio));
+    ui->label_StillObject->setPixmap(imgOriginal.scaled(size,Qt::KeepAspectRatio));
 }
 
-void StillObject::updateFolderIterator(){
+void StillObject::initFolderIterator(){
 
     if(folderIt != NULL){
         delete folderIt;
@@ -41,8 +41,7 @@ void StillObject::resizeEvent(QResizeEvent *event){
     if(PicturePath.isEmpty()){
         event->ignore();
     } else {
-        QSize size = ui->label_StillObject->size();
-        ui->label_StillObject->setPixmap(QPixmap(PicturePath).scaled(size,Qt::KeepAspectRatio));
+        resizeProcessedPictures();
         event->accept();
     }
 }
@@ -66,13 +65,49 @@ void StillObject::mouseDoubleClickEvent(QMouseEvent *event){
 
 }
 
+void StillObject::mousePressEvent(QMouseEvent *event)
+{
+    if(!ui->checkBox_ColorCheck->isChecked()){
+        event->ignore();
+        return;
+    }
+
+    //get coordinates in the picture
+    QPoint p = ui->label_StillObject->mapFromParent(event->pos());
+    QSize Correction = (ui->label_StillObject->size() - ui->label_StillObject->pixmap()->size())/2;
+    int displayW = ui->label_StillObject->pixmap()->width();
+    int displayH = ui->label_StillObject->pixmap()->height();
+    QPoint CorrectedP(p.x() - Correction.width(),p.y() - Correction.height());
+    if(CorrectedP.x() < 0 || CorrectedP.y() < 0 ||
+            CorrectedP.x() > displayW || CorrectedP.y() > displayH)
+    {
+        event->ignore();
+        return;
+    }
+
+    //pass the coordinate to opencv to process the color
+    QPoint ResizedP((float)CorrectedP.x()/(float)displayW*imgOriginal.width(),
+                    (float)CorrectedP.y()/(float)displayH*imgOriginal.height());
+    cv::Vec3b pixelColor = mat_picture_original.at<cv::Vec3b>(cv::Point(ResizedP.x(),ResizedP.y()));
+    // red = pixelColor.val[2]
+    // greeb = pixelColor.val[1]
+    // blue = pixelColor.val[0]
+
+    pixelColorHSV = ConvertColor(pixelColor,CV_BGR2HSV);
+    // H = pixelColor.val[0]
+    // S = pixelColor.val[1]
+    // V = pixelColor.val[2]
+
+    startDetection();
+}
+
 void StillObject::on_toolButton_PictureSelection_clicked()
 {
     QString tempPath = QFileDialog::getOpenFileName(this,"Select picture",PicturePath,"Images (*.png *.bmp *jpg *.pgm)");
     if(QFileDialog::Accepted && !tempPath.isNull()){
         PicturePath = tempPath;
         displayOnGUI();
-        updateFolderIterator();
+        initFolderIterator();
     }
 }
 
@@ -90,14 +125,17 @@ void StillObject::on_spinBox_MinNeighbors_valueChanged(int arg1)
 
 
 void StillObject::on_detectiondone(){
-
-    QSize size = ui->label_StillObject->size();
-    ui->label_StillObject->setPixmap(QPixmap::fromImage(*imgForDisplay).scaled(size,Qt::KeepAspectRatio));
-    ui->label_ColorRange->setPixmap(QPixmap::fromImage(*imgForColorRange).scaled(size,Qt::KeepAspectRatio));
+    resizeProcessedPictures();
+    QString text;
     if(objects.size() > 0)
-        ui->label_ObjectCount->setText(QString::number(objects.size())+" objects");
+        text.append(QString::number(objects.size())+" objects");
+    else if(ui->checkBox_ColorCheck->isChecked())
+        text.append("\tH:" + QString::number(pixelColorHSV.val[0]) +
+                    " S:" + QString::number(pixelColorHSV.val[1]) +
+                    " V:" + QString::number(pixelColorHSV.val[2]));
     else
-        ui->label_ObjectCount->setText("");
+        text.clear();
+    ui->label_ObjectCount->setText(text);
 }
 
 void StillObject::startDetection(){
@@ -112,22 +150,24 @@ void StillObject::performDetection(){
     haar_cascade.detectMultiScale(mat_picture_gray,objects,scaleFactor,minNeighbors);
 
     for(unsigned int i = 0; i < objects.size(); i++){
-        cv::rectangle(mat_picture_original,objects[i],CV_RGB(0,255,0),1);
+        cv::rectangle(mat_picture_rgb,objects[i],CV_RGB(0,255,0),1);
     }
 
-    cv::inRange(mat_picture_original,
-                cv::Scalar(ui->spinBox_LBH->value(),ui->spinBox_LBS->value(),
-                           ui->spinBox_LBV->value()),
-                cv::Scalar(ui->spinBox_UBH->value(),ui->spinBox_UBS->value(),
-                           ui->spinBox_UBV->value()),color);
-    cv::cvtColor(color,color,CV_GRAY2RGB);
-    cv::cvtColor(mat_picture_original,mat_picture_original,CV_BGR2RGB);
-
-    imgForDisplay = new QImage((uchar*)mat_picture_original.data,
-                               mat_picture_original.cols,
-                               mat_picture_original.rows,
-                               mat_picture_original.step,
+    imgForDisplay = new QImage((uchar*)mat_picture_rgb.data,
+                               mat_picture_rgb.cols,
+                               mat_picture_rgb.rows,
+                               mat_picture_rgb.step,
                                QImage::Format_RGB888);
+
+    cv::inRange(mat_picture_original,
+                cv::Scalar(ColorBound(pixelColorHSV.val[0] - ui->spinBox_LBH->value()),
+                           ColorBound(pixelColorHSV.val[1] - ui->spinBox_LBS->value()),
+                           ColorBound(pixelColorHSV.val[2] - ui->spinBox_LBV->value())),
+                cv::Scalar(ColorBound(pixelColorHSV.val[0] + ui->spinBox_UBH->value()),
+                           ColorBound(pixelColorHSV.val[1] + ui->spinBox_UBS->value()),
+                           ColorBound(pixelColorHSV.val[2] + ui->spinBox_UBV->value())),
+                color);
+    cv::cvtColor(color,color,CV_GRAY2RGB);
 
     imgForColorRange = new QImage((uchar*)color.data,
                                   color.cols,
@@ -135,8 +175,25 @@ void StillObject::performDetection(){
                                   color.step,
                                   QImage::Format_RGB888);
 
-
     emit StillObject::doneDetection();
+}
+
+void StillObject::resizeProcessedPictures()
+{
+    QSize size = ui->label_StillObject->size();
+    ui->label_StillObject->setPixmap(QPixmap::fromImage(*imgForDisplay).scaled(size,Qt::KeepAspectRatio));
+    ui->label_ColorRange->setPixmap(QPixmap::fromImage(*imgForColorRange).scaled(size,Qt::KeepAspectRatio));
+}
+
+//Check if the value is within 0 and 255, if not return the bound.
+int StillObject::ColorBound(const int color)
+{
+    if(color > 255)
+        return 255;
+    if(color < 0)
+        return 0;
+
+    return color;
 }
 
 void StillObject::on_checkBox_ColorCheck_clicked(bool checked)
