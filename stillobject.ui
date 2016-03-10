@@ -256,7 +256,7 @@
              <string>-</string>
             </property>
             <property name="maximum">
-             <number>359</number>
+             <number>179</number>
             </property>
            </widget>
           </item>
@@ -324,7 +324,7 @@
              <string>+</string>
             </property>
             <property name="maximum">
-             <number>359</number>
+             <number>179</number>
             </property>
            </widget>
           </item>

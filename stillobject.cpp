@@ -159,14 +159,65 @@ void StillObject::performDetection(){
                                mat_picture_rgb.step,
                                QImage::Format_RGB888);
 
-    cv::inRange(mat_picture_original,
-                cv::Scalar(ColorBound(pixelColorHSV.val[0] - ui->spinBox_LBH->value()),
+    colorPicker();
+
+    emit StillObject::doneDetection();
+}
+
+void StillObject::colorPicker()
+{
+    int lowerResult[3] = { pixelColorHSV.val[0] - ui->spinBox_LBH->value(),
                            ColorBound(pixelColorHSV.val[1] - ui->spinBox_LBS->value()),
-                           ColorBound(pixelColorHSV.val[2] - ui->spinBox_LBV->value())),
-                cv::Scalar(ColorBound(pixelColorHSV.val[0] + ui->spinBox_UBH->value()),
+                           ColorBound(pixelColorHSV.val[2] - ui->spinBox_LBV->value())};
+    int upperResult[3] = { pixelColorHSV.val[0] + ui->spinBox_UBH->value(),
                            ColorBound(pixelColorHSV.val[1] + ui->spinBox_UBS->value()),
-                           ColorBound(pixelColorHSV.val[2] + ui->spinBox_UBV->value())),
-                color);
+                           ColorBound(pixelColorHSV.val[2] + ui->spinBox_UBV->value())};
+
+    //wrap around needed for hue value, since 179 and 1 both represent red
+    if(lowerResult[0] < 0){
+        cv::Mat wrap;
+        cv::Mat limit;
+        //wrap up part
+        cv::inRange(mat_picture_original,
+                    cv::Scalar( 180 + lowerResult[0],lowerResult[1],lowerResult[2]),
+                    cv::Scalar( 180,upperResult[1],upperResult[2]),
+                    wrap);
+
+        //limited part
+        cv::inRange(mat_picture_original,
+                    cv::Scalar( 0,lowerResult[1],lowerResult[2]),
+                    cv::Scalar( upperResult[0],upperResult[1],upperResult[2]),
+                    limit);
+
+        color = wrap + limit;
+
+        qDebug() << "lowerbound: " << QString::number(180 + lowerResult[0]) << " " << QString::number(upperResult[0]);
+
+    } else if (upperResult[0] > 180){
+        cv::Mat wrap;
+        cv::Mat limit;
+        //wrap up part
+        cv::inRange(mat_picture_original,
+                    cv::Scalar( 0,lowerResult[1],lowerResult[2]),
+                    cv::Scalar( upperResult[0] - 180,upperResult[1],upperResult[2]),
+                    wrap);
+
+        //limited part
+        cv::inRange(mat_picture_original,
+                    cv::Scalar( lowerResult[0],lowerResult[1],lowerResult[2]),
+                    cv::Scalar( 180,upperResult[1],upperResult[2]),
+                    limit);
+        color = wrap + limit;
+
+        qDebug() << "upperbound: " << QString::number(upperResult[0] - 180) << " " << QString::number(lowerResult[0]);
+    } else {
+
+        cv::inRange(mat_picture_original,
+                    cv::Scalar(lowerResult[0],lowerResult[1],lowerResult[2]),
+                    cv::Scalar(upperResult[0],upperResult[1],upperResult[2]),
+                    color);
+    }
+
     cv::cvtColor(color,color,CV_GRAY2RGB);
 
     imgForColorRange = new QImage((uchar*)color.data,
@@ -174,8 +225,6 @@ void StillObject::performDetection(){
                                   color.rows,
                                   color.step,
                                   QImage::Format_RGB888);
-
-    emit StillObject::doneDetection();
 }
 
 void StillObject::resizeProcessedPictures()

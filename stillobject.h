@@ -48,6 +48,7 @@ private:
     void initFolderIterator();
     void startDetection();
     void performDetection();
+    void colorPicker();
     void resizeProcessedPictures();
     int ColorBound(const int color);
 
