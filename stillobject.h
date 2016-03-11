@@ -48,7 +48,7 @@ private:
     void initFolderIterator();
     void startDetection();
     void performDetection();
-    void colorPicker();
+    void colorPicker(cv::Mat image);
     void resizeProcessedPictures();
     int ColorBound(const int color);
 
@@ -57,7 +57,7 @@ private:
     QDirIterator *folderIt = NULL;
     cv::Vec3b pixelColorHSV;
 
-    cv::Mat color;
+    cv::Mat mat_colorResult;
 };
 
 

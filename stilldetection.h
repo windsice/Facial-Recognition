@@ -34,6 +34,8 @@ public:
         mat_picture_original = cv::imread(ImagePath.toStdString());
         cv::cvtColor(mat_picture_original,mat_picture_gray,CV_BGR2GRAY);
         cv::cvtColor(mat_picture_original,mat_picture_rgb,CV_BGR2RGB);
+        cv::cvtColor(mat_picture_original,mat_picture_hsv,CV_BGR2HSV);
+        mat_picture_empty.create(mat_picture_original.rows,mat_picture_original.cols,mat_picture_gray.depth());
     }
 
     // this step is necessary for detection, which tells the machince how does the object looks like.
@@ -60,7 +62,10 @@ public:
 protected:
     cv::CascadeClassifier haar_cascade;     //holding the graphical characteristic of the object.
     vector< cv::Rect_<int> > objects;       //holding the positions of detected objects.
+    cv::Mat mat_colorPick_object;           //holding the object we want to perfer color detection.
+    cv::Mat mat_picture_empty;              //holding the picture size information, but without image.
     cv::Mat mat_picture_original;           //Image that we want to perform detection on.
+    cv::Mat mat_picture_hsv;                //Image that we want to perform color detection.
     cv::Mat mat_picture_rgb;                //Image that we want to display.
     cv::Mat mat_picture_gray;               //A matrix that holds graymode of the picture is needed for detection.
     QPixmap imgOriginal;

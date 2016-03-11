@@ -72,31 +72,47 @@ void StillObject::mousePressEvent(QMouseEvent *event)
         return;
     }
 
-    //get coordinates in the picture
-    QPoint p = ui->label_StillObject->mapFromParent(event->pos());
-    QSize Correction = (ui->label_StillObject->size() - ui->label_StillObject->pixmap()->size())/2;
-    int displayW = ui->label_StillObject->pixmap()->width();
-    int displayH = ui->label_StillObject->pixmap()->height();
-    QPoint CorrectedP(p.x() - Correction.width(),p.y() - Correction.height());
-    if(CorrectedP.x() < 0 || CorrectedP.y() < 0 ||
-            CorrectedP.x() > displayW || CorrectedP.y() > displayH)
-    {
-        event->ignore();
-        return;
+    QPoint ResizedP;
+    if(!ui->checkBox_lockColor->isChecked()){
+        //get coordinates in the picture
+        QPoint p = ui->label_StillObject->mapFromParent(event->pos());
+        QSize Correction = (ui->label_StillObject->size() - ui->label_StillObject->pixmap()->size())/2;
+        int displayW = ui->label_StillObject->pixmap()->width();
+        int displayH = ui->label_StillObject->pixmap()->height();
+        QPoint CorrectedP(p.x() - Correction.width(),p.y() - Correction.height());
+        if(CorrectedP.x() < 0 || CorrectedP.y() < 0 ||
+                CorrectedP.x() > displayW || CorrectedP.y() > displayH)
+        {
+            event->ignore();
+            return;
+        }
+
+        //pass the coordinate to opencv to process the color
+        ResizedP.setX((float)CorrectedP.x()/(float)displayW*imgOriginal.width());
+        ResizedP.setY((float)CorrectedP.y()/(float)displayH*imgOriginal.height());
+        cv::Vec3b pixelColor = mat_picture_original.at<cv::Vec3b>(cv::Point(ResizedP.x(),ResizedP.y()));
+        // red = pixelColor.val[2]
+        // greeb = pixelColor.val[1]
+        // blue = pixelColor.val[0]
+
+        pixelColorHSV = ConvertColor(pixelColor,CV_BGR2HSV);
+        // H = pixelColor.val[0]
+        // S = pixelColor.val[1]
+        // V = pixelColor.val[2]
+    } else {
+        pixelColorHSV[0] = ui->spinBox_H->value();
+        pixelColorHSV[1] = ui->spinBox_S->value();
+        pixelColorHSV[2] = ui->spinBox_V->value();
     }
 
-    //pass the coordinate to opencv to process the color
-    QPoint ResizedP((float)CorrectedP.x()/(float)displayW*imgOriginal.width(),
-                    (float)CorrectedP.y()/(float)displayH*imgOriginal.height());
-    cv::Vec3b pixelColor = mat_picture_original.at<cv::Vec3b>(cv::Point(ResizedP.x(),ResizedP.y()));
-    // red = pixelColor.val[2]
-    // greeb = pixelColor.val[1]
-    // blue = pixelColor.val[0]
-
-    pixelColorHSV = ConvertColor(pixelColor,CV_BGR2HSV);
-    // H = pixelColor.val[0]
-    // S = pixelColor.val[1]
-    // V = pixelColor.val[2]
+    mat_colorPick_object.release();
+    cv::Point p(ResizedP.x(),ResizedP.y());
+    for(unsigned int i = 0; i < objects.size(); i++){
+        if(objects[i].contains(p)){
+            mat_colorPick_object = mat_picture_hsv(objects[i]);
+            break;
+        }
+    }
 
     startDetection();
 }
@@ -129,12 +145,14 @@ void StillObject::on_detectiondone(){
     QString text;
     if(objects.size() > 0)
         text.append(QString::number(objects.size())+" objects");
-    else if(ui->checkBox_ColorCheck->isChecked())
-        text.append("\tH:" + QString::number(pixelColorHSV.val[0]) +
-                    " S:" + QString::number(pixelColorHSV.val[1]) +
-                    " V:" + QString::number(pixelColorHSV.val[2]));
     else
         text.clear();
+
+    if(ui->checkBox_ColorCheck->isChecked()){
+        ui->spinBox_H->setValue(pixelColorHSV.val[0]);
+        ui->spinBox_S->setValue(pixelColorHSV.val[1]);
+        ui->spinBox_V->setValue(pixelColorHSV.val[2]);
+    }
     ui->label_ObjectCount->setText(text);
 }
 
@@ -159,12 +177,15 @@ void StillObject::performDetection(){
                                mat_picture_rgb.step,
                                QImage::Format_RGB888);
 
-    colorPicker();
+    if(mat_colorPick_object.empty())
+        colorPicker(mat_picture_hsv);
+    else
+        colorPicker(mat_colorPick_object);
 
     emit StillObject::doneDetection();
 }
 
-void StillObject::colorPicker()
+void StillObject::colorPicker(cv::Mat image)
 {
     int lowerResult[3] = { pixelColorHSV.val[0] - ui->spinBox_LBH->value(),
                            ColorBound(pixelColorHSV.val[1] - ui->spinBox_LBS->value()),
@@ -178,52 +199,51 @@ void StillObject::colorPicker()
         cv::Mat wrap;
         cv::Mat limit;
         //wrap up part
-        cv::inRange(mat_picture_original,
+        cv::inRange(image,
                     cv::Scalar( 180 + lowerResult[0],lowerResult[1],lowerResult[2]),
                     cv::Scalar( 180,upperResult[1],upperResult[2]),
                     wrap);
 
         //limited part
-        cv::inRange(mat_picture_original,
+        cv::inRange(image,
                     cv::Scalar( 0,lowerResult[1],lowerResult[2]),
                     cv::Scalar( upperResult[0],upperResult[1],upperResult[2]),
                     limit);
 
-        color = wrap + limit;
-
-        qDebug() << "lowerbound: " << QString::number(180 + lowerResult[0]) << " " << QString::number(upperResult[0]);
+        mat_colorResult = wrap + limit;
 
     } else if (upperResult[0] > 180){
         cv::Mat wrap;
         cv::Mat limit;
         //wrap up part
-        cv::inRange(mat_picture_original,
+        cv::inRange(image,
                     cv::Scalar( 0,lowerResult[1],lowerResult[2]),
                     cv::Scalar( upperResult[0] - 180,upperResult[1],upperResult[2]),
                     wrap);
 
         //limited part
-        cv::inRange(mat_picture_original,
+        cv::inRange(image,
                     cv::Scalar( lowerResult[0],lowerResult[1],lowerResult[2]),
                     cv::Scalar( 180,upperResult[1],upperResult[2]),
                     limit);
-        color = wrap + limit;
+        mat_colorResult = wrap + limit;
 
-        qDebug() << "upperbound: " << QString::number(upperResult[0] - 180) << " " << QString::number(lowerResult[0]);
     } else {
 
-        cv::inRange(mat_picture_original,
+
+        cv::inRange(image,
                     cv::Scalar(lowerResult[0],lowerResult[1],lowerResult[2]),
                     cv::Scalar(upperResult[0],upperResult[1],upperResult[2]),
-                    color);
+                    mat_colorResult);
     }
 
-    cv::cvtColor(color,color,CV_GRAY2RGB);
+    cv::cvtColor(mat_colorResult,mat_colorResult,CV_GRAY2RGB);
 
-    imgForColorRange = new QImage((uchar*)color.data,
-                                  color.cols,
-                                  color.rows,
-                                  color.step,
+
+    imgForColorRange = new QImage((uchar*)mat_colorResult.data,
+                                  mat_colorResult.cols,
+                                  mat_colorResult.rows,
+                                  mat_colorResult.step,
                                   QImage::Format_RGB888);
 }
 
