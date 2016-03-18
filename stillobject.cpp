@@ -34,6 +34,10 @@ void StillObject::initFolderIterator(){
         folderIt = NULL;
     }
     folderIt = new QDirIterator(QFileInfo(PicturePath).absolutePath(),QDir::Files);
+
+    // skip iterator so that the next one won't always be the same
+    while(folderIt->filePath() != PicturePath)
+        folderIt->next();
 }
 
 void StillObject::resizeEvent(QResizeEvent *event){
@@ -62,6 +66,7 @@ void StillObject::mouseDoubleClickEvent(QMouseEvent *event){
         PicturePath = folderIt->next();
         displayOnGUI();
     }
+
 
 }
 
@@ -157,6 +162,7 @@ void StillObject::on_detectiondone(){
 }
 
 void StillObject::startDetection(){
+    ui->label_FilePath->setText("Current File: " + PicturePath);
     performingThread = QtConcurrent::run(this,&StillObject::performDetection);
     ui->label_ObjectCount->setText("Loading...");
 }
@@ -185,46 +191,51 @@ void StillObject::performDetection(){
     emit StillObject::doneDetection();
 }
 
-void StillObject::colorPicker(cv::Mat image)
+void StillObject::updateColorBound()
 {
-    int lowerResult[3] = { pixelColorHSV.val[0] - ui->spinBox_LBH->value(),
-                           ColorBound(pixelColorHSV.val[1] - ui->spinBox_LBS->value()),
-                           ColorBound(pixelColorHSV.val[2] - ui->spinBox_LBV->value())};
-    int upperResult[3] = { pixelColorHSV.val[0] + ui->spinBox_UBH->value(),
-                           ColorBound(pixelColorHSV.val[1] + ui->spinBox_UBS->value()),
-                           ColorBound(pixelColorHSV.val[2] + ui->spinBox_UBV->value())};
+    LowerBound_color[0] = pixelColorHSV.val[0] - ui->spinBox_LBH->value();
+    LowerBound_color[1] = ColorBound(pixelColorHSV.val[1] - ui->spinBox_LBS->value());
+    LowerBound_color[2] = ColorBound(pixelColorHSV.val[2] - ui->spinBox_LBV->value());
+    UpperBound_color[0] = pixelColorHSV.val[0] + ui->spinBox_UBH->value();
+    UpperBound_color[1] = ColorBound(pixelColorHSV.val[1] + ui->spinBox_UBS->value());
+    UpperBound_color[2] = ColorBound(pixelColorHSV.val[2] + ui->spinBox_UBV->value());
+}
+
+QImage StillObject::colorPicker(cv::Mat image)
+{
+    updateColorBound();
 
     //wrap around needed for hue value, since 179 and 1 both represent red
-    if(lowerResult[0] < 0){
+    if(LowerBound_color[0] < 0){
         cv::Mat wrap;
         cv::Mat limit;
         //wrap up part
         cv::inRange(image,
-                    cv::Scalar( 180 + lowerResult[0],lowerResult[1],lowerResult[2]),
-                    cv::Scalar( 180,upperResult[1],upperResult[2]),
+                    cv::Scalar( 180 + LowerBound_color[0],LowerBound_color[1],LowerBound_color[2]),
+                    cv::Scalar( 180,UpperBound_color[1],UpperBound_color[2]),
                     wrap);
 
         //limited part
         cv::inRange(image,
-                    cv::Scalar( 0,lowerResult[1],lowerResult[2]),
-                    cv::Scalar( upperResult[0],upperResult[1],upperResult[2]),
+                    cv::Scalar( 0,LowerBound_color[1],LowerBound_color[2]),
+                    cv::Scalar( UpperBound_color[0],UpperBound_color[1],UpperBound_color[2]),
                     limit);
 
         mat_colorResult = wrap + limit;
 
-    } else if (upperResult[0] > 180){
+    } else if (UpperBound_color[0] > 180){
         cv::Mat wrap;
         cv::Mat limit;
         //wrap up part
         cv::inRange(image,
-                    cv::Scalar( 0,lowerResult[1],lowerResult[2]),
-                    cv::Scalar( upperResult[0] - 180,upperResult[1],upperResult[2]),
+                    cv::Scalar( 0,LowerBound_color[1],LowerBound_color[2]),
+                    cv::Scalar( UpperBound_color[0] - 180,UpperBound_color[1],UpperBound_color[2]),
                     wrap);
 
         //limited part
         cv::inRange(image,
-                    cv::Scalar( lowerResult[0],lowerResult[1],lowerResult[2]),
-                    cv::Scalar( 180,upperResult[1],upperResult[2]),
+                    cv::Scalar( LowerBound_color[0],LowerBound_color[1],LowerBound_color[2]),
+                    cv::Scalar( 180,UpperBound_color[1],UpperBound_color[2]),
                     limit);
         mat_colorResult = wrap + limit;
 
@@ -232,8 +243,8 @@ void StillObject::colorPicker(cv::Mat image)
 
 
         cv::inRange(image,
-                    cv::Scalar(lowerResult[0],lowerResult[1],lowerResult[2]),
-                    cv::Scalar(upperResult[0],upperResult[1],upperResult[2]),
+                    cv::Scalar(LowerBound_color[0],LowerBound_color[1],LowerBound_color[2]),
+                    cv::Scalar(UpperBound_color[0],UpperBound_color[1],UpperBound_color[2]),
                     mat_colorResult);
     }
 
@@ -245,6 +256,8 @@ void StillObject::colorPicker(cv::Mat image)
                                   mat_colorResult.rows,
                                   mat_colorResult.step,
                                   QImage::Format_RGB888);
+
+    return *imgForColorRange;
 }
 
 void StillObject::resizeProcessedPictures()
@@ -269,9 +282,56 @@ void StillObject::on_checkBox_ColorCheck_clicked(bool checked)
 {
     if(checked){
         ui->groupBox_ColorRange->setVisible(true);
+        ui->pushButton_outputResults->setVisible(true);
+        ui->label_ColorRange->setVisible(true);
     } else {
         ui->groupBox_ColorRange->setVisible(false);
+        ui->pushButton_outputResults->setVisible(false);
+        ui->label_ColorRange->setVisible(false);
     }
     displayOnGUI();
 }
 
+
+void StillObject::on_pushButton_outputResults_clicked()
+{
+    QString outputFolder;
+    outputFolder = QFileDialog::getExistingDirectory(this,"Output location","");
+    if(outputFolder.isNull() || outputFolder.isEmpty())
+        QMessageBox::critical(this,"error","Check your path");
+
+    //Write a README file
+    QString readme_content;
+    readme_content += "Lower Bound: ";
+    for(int i = 0 ; i < 3 ; i++){
+        readme_content += QString::number(LowerBound_color[i]) + " ";
+    }
+    readme_content += "\nUpper Bound: ";
+    for(int i = 0 ; i < 3 ; i++){
+        readme_content += QString::number(UpperBound_color[i]) + " ";
+    }
+
+    QFile file(outputFolder + "/README.txt");
+    if (file.open(QIODevice::ReadWrite)) {
+        QTextStream stream(&file);
+        stream << readme_content << endl;
+    }
+
+    QDirIterator it(QFileInfo(PicturePath).absolutePath(),QDir::Files);
+    QString outputPath;
+    while(it.hasNext()){
+        it.next();
+
+        outputPath = QString("%1%2").arg(outputFolder + "/").arg(it.fileName());
+        ui->label_ObjectCount->setText("Working on: " + outputPath);
+
+        cv::Mat imageMat = cv::imread(it.filePath().toStdString());
+        cv::cvtColor(imageMat,imageMat,CV_BGR2HSV);
+        QImage image = colorPicker(imageMat);
+        image.save(outputPath);
+    }
+    ui->label_ObjectCount->setText("");
+
+    QMessageBox::information(this,"Output to folder","done");
+
+}

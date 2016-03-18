@@ -55,6 +55,8 @@ private slots:
 
     void on_ClassifierLineEdit_textChanged(const QString &arg1);
     void on_ClassifierPath_toolButton_clicked();
+    void on_lineEdit_colorClassifier_textChanged(const QString &arg1);
+    void on_toolButton_colorClassifier_clicked();
 
     void on_LBPH_checkBox_clicked(bool checked);
     void on_LBPH_lineEdit_textChanged(const QString &arg1);
@@ -118,6 +120,7 @@ private:
     QString Target_Path;
 
     QString ClassifierPath;
+    QString ColorClassifierPath;
     Ptr<FaceRecognizer> LBPHModel;
     QString LBPHPath;
     Ptr<FaceRecognizer> EigenFaceModel;

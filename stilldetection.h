@@ -47,6 +47,14 @@ public:
             return false;
         }
     }
+    inline bool setColorClassifier(const QString &ClassifierPath){
+        try{
+            Color_haar_cascade.load(ClassifierPath.toStdString());
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
 
     cv::Vec3b ConvertColor( cv::Vec3b src, int code)
     {
@@ -61,7 +69,9 @@ public:
 
 protected:
     cv::CascadeClassifier haar_cascade;     //holding the graphical characteristic of the object.
+    cv::CascadeClassifier Color_haar_cascade;     //same as above but for certain color range
     vector< cv::Rect_<int> > objects;       //holding the positions of detected objects.
+    vector< cv::Rect_<int> > Color_objects;
     cv::Mat mat_colorPick_object;           //holding the object we want to perfer color detection.
     cv::Mat mat_picture_empty;              //holding the picture size information, but without image.
     cv::Mat mat_picture_original;           //Image that we want to perform detection on.

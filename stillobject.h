@@ -11,6 +11,7 @@
 #include <QDirIterator>
 #include <QFileInfo>
 #include <QLabel>
+#include <QMessageBox>
 
 namespace Ui {
 class StillObject;
@@ -43,12 +44,15 @@ private slots:
 
     void on_checkBox_ColorCheck_clicked(bool checked);
 
+    void on_pushButton_outputResults_clicked();
+
 private:
     void displayOnGUI();
     void initFolderIterator();
     void startDetection();
     void performDetection();
-    void colorPicker(cv::Mat image);
+    void updateColorBound();
+    QImage colorPicker(cv::Mat image);
     void resizeProcessedPictures();
     int ColorBound(const int color);
 
@@ -58,6 +62,9 @@ private:
     cv::Vec3b pixelColorHSV;
 
     cv::Mat mat_colorResult;
+
+    int UpperBound_color[3];
+    int LowerBound_color[3];
 };
 
 

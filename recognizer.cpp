@@ -36,6 +36,7 @@ void Recognizer::onOpSel(){
     settingsUI->groupBox_ObjDet->setVisible(false);
     settingsUI->groupBox_FacialRec->setVisible(false);
     settingsUI->groupBox_prediction->setVisible(false);
+    settingsUI->groupBox_colorHasPath->setVisible(false);
 
     if(settingsUI->pushButton_liveFacial->isChecked()){
 
@@ -90,6 +91,8 @@ bool Recognizer::passParaToOp(){
     else if(StackWidgetIndex == TAB_STILLOBJECT){
         if(!ClassifierPath.isEmpty())
             stillObject->setClassifier(ClassifierPath);
+        if(!ColorClassifierPath.isEmpty())
+            stillObject->setColorClassifier(ColorClassifierPath);
     }
     else
     {
@@ -656,6 +659,26 @@ void Recognizer::on_ClassifierPath_toolButton_clicked()
     }
 }
 
+void Recognizer::on_lineEdit_colorClassifier_textChanged(const QString &arg1)
+{
+    if(arg1.isNull() || arg1.isEmpty())
+        return;
+
+    ColorClassifierPath = arg1;
+    settingsUI->groupBox_colorHasPath->setVisible(true);
+}
+
+void Recognizer::on_toolButton_colorClassifier_clicked()
+{
+    QString tempPath;
+    tempPath = QFileDialog::getOpenFileName(this,"Select Color Classifier XML Files",ColorClassifierPath,"XML Files (*.xml)");
+    if(QFileDialog::Accepted && !tempPath.isNull())
+    {
+        ColorClassifierPath = tempPath;
+        settingsUI->lineEdit_colorClassifier->setText(ColorClassifierPath);
+
+    }
+}
 
 void Recognizer::on_pushButton_liveFacial_clicked()
 {
@@ -689,4 +712,7 @@ void Recognizer::on_pushButton_setting_clicked()
     }
     onOpSel();
 }
+
+
+
 
