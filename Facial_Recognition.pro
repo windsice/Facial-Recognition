@@ -16,7 +16,8 @@ MOBILITY = multimedia
 SOURCES += main.cpp\
         recognizer.cpp \
     detector.cpp \
-    stillobject.cpp
+    stillobject.cpp \
+    XML_creator.cpp
 
 unix {
     INCLUDEPATH += /usr/local/include/opencv
@@ -24,8 +25,8 @@ unix {
 }
 
 win32 {
-    INCLUDEPATH += D://software//opencv//MyBuild//install//include
-    LIBS += -LD://software//opencv//MyBuild//bin \
+    INCLUDEPATH += C://software//opencv//MyBuild//install//include
+    LIBS += -LC://software//opencv//MyBuild//bin \
         libopencv_calib3d249d \
         libopencv_contrib249d \
         libopencv_core249d \
@@ -50,11 +51,13 @@ win32 {
 HEADERS  += recognizer.h \
     detector.h \
     stilldetection.h \
-    stillobject.h
+    stillobject.h \
+    XML_creator.h
 
 FORMS    += recognizer.ui \
     detector.ui \
-    stillobject.ui
+    stillobject.ui \
+    XML_creator.ui
 
 RESOURCES += \
     Icon.qrc

@@ -1,7 +1,6 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef XML_CREATOR_H
+#define XML_CREATOR_H
 
-#include <QMainWindow>
 #include <QImage>
 #include <QLabel>
 #include <QMouseEvent>
@@ -14,16 +13,16 @@
 
 
 namespace Ui {
-class MainWindow;
+class XML_creator;
 }
 
-class MainWindow : public QMainWindow
+class XML_creator : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+    explicit XML_creator(QWidget *parent = 0);
+    ~XML_creator();
 
 private slots:
     void on_pushButton_negpath_clicked();
@@ -41,7 +40,7 @@ private slots:
     void generateFileXML(const int &result);
 
 private:
-    Ui::MainWindow *ui;
+    Ui::XML_creator *ui;
     QString targetname;
     QImage posdisplay;
     QPixmap posdisplay_px;
@@ -87,4 +86,4 @@ protected:
 
 };
 
-#endif // MAINWINDOW_H
+#endif // XML_CREATOR_H

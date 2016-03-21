@@ -59,6 +59,8 @@ void Recognizer::onOpSel(){
         settingsUI->groupBox_preparation->setVisible(true);
         settingsUI->groupBox_ObjDet->setVisible(true);
         StackWidgetIndex = TAB_STILLOBJECT;
+    } else if(settingsUI->pushButton_XMLcreator->isChecked()){
+        StackWidgetIndex = TAB_XMLCREATOR;
     } else {
         StackWidgetIndex = TAB_SETTING;
     }
@@ -150,6 +152,10 @@ void Recognizer::TabsInit(){
     //stillObject
     stillObject = new StillObject(this);
     settingsUI->stackedWidget->insertWidget(TAB_STILLOBJECT,stillObject);
+
+    //xml creator
+    xml_creator = new XML_creator(this);
+    settingsUI->stackedWidget->insertWidget(TAB_XMLCREATOR,xml_creator);
 }
 
 Mat Recognizer::norm_0_255(InputArray _src) {
@@ -695,6 +701,7 @@ void Recognizer::on_pushButton_stillObject_clicked()
     onOpSel();
 }
 
+//the blue right arrow on the bottom
 void Recognizer::on_pushButton_action_clicked()
 {
     if(passParaToOp()){
@@ -703,6 +710,7 @@ void Recognizer::on_pushButton_action_clicked()
     }
 }
 
+//the blue left arrow on the bottom, which always back to setting when clicked
 void Recognizer::on_pushButton_setting_clicked()
 {
     StackWidgetIndex = TAB_SETTING;
@@ -713,6 +721,7 @@ void Recognizer::on_pushButton_setting_clicked()
     onOpSel();
 }
 
-
-
-
+void Recognizer::on_pushButton_XMLcreator_clicked()
+{
+    onOpSel();
+}

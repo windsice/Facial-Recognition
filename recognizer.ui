@@ -144,7 +144,7 @@
               </spacer>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_XMLgeneration">
+              <widget class="QPushButton" name="pushButton_XMLcreator">
                <property name="toolTip">
                 <string>Generate your own xml file for detection</string>
                </property>
@@ -841,7 +841,7 @@
      <x>0</x>
      <y>0</y>
      <width>834</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">

@@ -17,6 +17,7 @@
 
 #include "detector.h"
 #include "stillobject.h"
+#include "XML_creator.h"
 
 #include <iostream>
 #include <fstream>
@@ -42,7 +43,7 @@ public:
     static Mat norm_0_255(InputArray _src);
     void read_csv(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';');
 
-    enum TabIndex { TAB_SETTING,TAB_CAMERA,TAB_STILLOBJECT};
+    enum TabIndex { TAB_SETTING,TAB_CAMERA,TAB_STILLOBJECT,TAB_XMLCREATOR};
     static const QList<QSize> RESOLUTION;
 
 private slots:
@@ -98,6 +99,8 @@ private slots:
     void on_pushButton_setting_clicked();
 
 
+    void on_pushButton_XMLcreator_clicked();
+
 private:
     //change layout based on the operation
     void onOpSel();
@@ -138,6 +141,7 @@ private:
     vector<int> labels;
     Detector *detector;
     StillObject *stillObject;
+    XML_creator *xml_creator;
 
     int StackWidgetIndex;
 };

@@ -1,5 +1,5 @@
 ﻿#include "XML_creator.h"
-#include "ui_mainwindow.h"
+#include "ui_xml_creator.h"
 #include <QFileDialog>
 #include <QDirIterator>
 #include <QDebug>
@@ -12,9 +12,9 @@
 #include <QWidget>
 #include <QStringList>
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+XML_creator::XML_creator(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::XML_creator)
 {
     ui->setupUi(this);
 
@@ -22,13 +22,13 @@ MainWindow::MainWindow(QWidget *parent) :
     stopAllOtherFunction = false;
 }
 
-MainWindow::~MainWindow()
+XML_creator::~XML_creator()
 {
     delete ui;
 }
 
 //get negative image path
-void MainWindow::on_pushButton_negpath_clicked(){
+void XML_creator::on_pushButton_negpath_clicked(){
     QString filename;
     filename = QFileDialog::getExistingDirectory(this,"Input location","");
     if(filename != ""){
@@ -38,7 +38,7 @@ void MainWindow::on_pushButton_negpath_clicked(){
 }
 
 //get positive image path
-void MainWindow::on_pushButton_pospath_clicked(){
+void XML_creator::on_pushButton_pospath_clicked(){
     QString filename;
     filename = QFileDialog::getExistingDirectory(this,"Input location","");
     if(filename != "")
@@ -48,7 +48,7 @@ void MainWindow::on_pushButton_pospath_clicked(){
 }
 
 //display negative image list and write the list to a ****bg.txt file
-void MainWindow::get_negative_image_list(){
+void XML_creator::get_negative_image_list(){
     QDirIterator it(ui->lineEdit_negpath->text(),QDir::Files);
     int numberofn = 0;
     while(it.hasNext()){
@@ -74,12 +74,12 @@ void MainWindow::get_negative_image_list(){
 }
 
 //get targetname
-void MainWindow::on_lineEdit_targetname_textChanged(const QString ){
+void XML_creator::on_lineEdit_targetname_textChanged(const QString ){
     targetname = ui->lineEdit_targetname->text();
 }
 
 //start creating sample process
-void MainWindow::on_pushButton_sample_clicked(){
+void XML_creator::on_pushButton_sample_clicked(){
     processedImageNumber = 0;
     int placeToStopScanPositiveFile = 0;
     NumberOfPositiveImage = 0;
@@ -119,7 +119,7 @@ void MainWindow::on_pushButton_sample_clicked(){
 }
 
 //update picture Iterator
-void MainWindow::updatePictureIterator(){
+void XML_creator::updatePictureIterator(){
     if(pictureIt != NULL){
        delete pictureIt;
        pictureIt = NULL;
@@ -130,7 +130,7 @@ void MainWindow::updatePictureIterator(){
 
 //part 1:display and output positive image information to ***infor.txt file
 //part 2:move on to the next positive image
-void MainWindow::mouseDoubleClickEvent(QMouseEvent *event){
+void XML_creator::mouseDoubleClickEvent(QMouseEvent *event){
     if(event->buttons()==Qt::LeftButton
       && mouseIsOnPixmap
       && NumberOfPositiveImageDisplayed < NumberOfPositiveImage
@@ -165,8 +165,8 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event){
     }
 }
 
-//update the displayed image size as the mainwindow changes
-void MainWindow::resizeEvent(QResizeEvent *event){
+//update the displayed image size as the XML_creator changes
+void XML_creator::resizeEvent(QResizeEvent *event){
     if(positiveimgpath.isEmpty()){
         event->ignore();
     }else{
@@ -178,8 +178,8 @@ void MainWindow::resizeEvent(QResizeEvent *event){
     }
 }
 
-//display a positve image on the mainwindow
-void MainWindow::displayPositiveImage(){
+//display a positve image on the XML_creator
+void XML_creator::displayPositiveImage(){
     if(pictureIt->hasNext()){
 
     positiveimgpath = pictureIt->next();
@@ -195,7 +195,7 @@ void MainWindow::displayPositiveImage(){
 }
 
 //mouse press event->getting initial position of the rectangle
-void MainWindow::mousePressEvent(QMouseEvent *event){
+void XML_creator::mousePressEvent(QMouseEvent *event){
 
     if(!stopAllOtherFunction&& event->button()==Qt::LeftButton){
     qpPixmapDimension.setX(0);
@@ -214,13 +214,13 @@ void MainWindow::mousePressEvent(QMouseEvent *event){
             PositiveInfo = PositiveInfo + cPositiveInfo;
             NumberOfSelectedObject++;
            if(NumberOfPositiveImageDisplayed < NumberOfPositiveImage){
-            ui->statusBar->showMessage("[x y width height] -> [" +cPositiveInfo+"]",5000);
+            //ui->statusBar->showMessage("[x y width height] -> [" +cPositiveInfo+"]",5000);
            }
         }
 }
 
 //check if mouse position occurs within the pixmap window
-void MainWindow::mouseMoveEvent(QMouseEvent *event){
+void XML_creator::mouseMoveEvent(QMouseEvent *event){
      qpPixmapFinal = event->pos() - getPixmapTopleftPos();
      qpMainFinal = event->pos();
      qpPixmapDimension = qpMainFinal-qpMainInitial;
@@ -243,7 +243,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event){
 }
 
 //get dimensions of the marked positive ojbect
-void MainWindow::mouseReleaseEvent(QMouseEvent *event)
+void XML_creator::mouseReleaseEvent(QMouseEvent *event)
 {
     if(!stopAllOtherFunction && event->button()==Qt::LeftButton){
         qpPixmapFinal = event->pos() - getPixmapTopleftPos();
@@ -253,7 +253,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 }
 
 //get top-left position of the pixmap window respect to the main window
-QPoint MainWindow::getPixmapTopleftPos()
+QPoint XML_creator::getPixmapTopleftPos()
 {
     if(!stopAllOtherFunction && positiveImageLoaded){
     int i = ui->label_displayposi->pos().x()+(ui->label_displayposi->width() - ui->label_displayposi->pixmap()->width())/2;
@@ -264,7 +264,7 @@ QPoint MainWindow::getPixmapTopleftPos()
 }
 
 //to mark the positive image
-void MainWindow::paintEvent(QPaintEvent *p)
+void XML_creator::paintEvent(QPaintEvent *p)
 {
     p->accept();
     this->update();
@@ -283,7 +283,7 @@ void MainWindow::paintEvent(QPaintEvent *p)
   }
 }
 
-void MainWindow::on_pushButton_XML_clicked()
+void XML_creator::on_pushButton_XML_clicked()
 {
     stopAllOtherFunction = true;
     resetCascadeFolder();
@@ -291,17 +291,17 @@ void MainWindow::on_pushButton_XML_clicked()
     haarTraining();
 }
 
-void MainWindow::getProcessOutput()
+void XML_creator::getProcessOutput()
 {
-    ui->statusBar->showMessage("Generating XML: cascades creation");
+    //ui->statusBar->showMessage("Generating XML: cascades creation");
     ui->plainTextEdit->appendPlainText(haarTrain->readAll());
 }
 
-void MainWindow::generateFileXML(const int &result)
+void XML_creator::generateFileXML(const int &result)
 {
     if(result == QProcess::CrashExit)
     {
-        ui->statusBar->showMessage("");
+        //ui->statusBar->showMessage("");
         ui->plainTextEdit->appendPlainText("Vector creation is completed!");
         return;
     }  else {
@@ -318,9 +318,9 @@ void MainWindow::generateFileXML(const int &result)
     generateXML->start(generateXMLprogram,xmlArgument);
 }
 
-void MainWindow::createPositiveImageVector()
+void XML_creator::createPositiveImageVector()
 {
-    ui->statusBar->showMessage("Generating XML: vector creation");
+    //ui->statusBar->showMessage("Generating XML: vector creation");
     QProcess *createVector = new QProcess(this);
     QString vectorProgram = "C:/Users/binguang/Documents/Haar-Training/Haar Training/training/createsamples.exe";
     QStringList vectorArgument;
@@ -334,7 +334,7 @@ void MainWindow::createPositiveImageVector()
 
 }
 
-void MainWindow::haarTraining()
+void XML_creator::haarTraining()
 {
     haarTrain = new QProcess(this);
 
@@ -357,7 +357,7 @@ void MainWindow::haarTraining()
     haarTrain->setReadChannelMode(QProcess::ForwardedChannels);
 }
 
-void MainWindow::resetCascadeFolder()
+void XML_creator::resetCascadeFolder()
 {
     QString cascadeFolderPath = "C:/Users/binguang/Documents/Haar-Training/Haar Training/training/cascades";
     QDir cascade(cascadeFolderPath);
