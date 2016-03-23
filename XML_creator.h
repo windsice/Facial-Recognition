@@ -24,13 +24,21 @@ public:
     explicit XML_creator(QWidget *parent = 0);
     ~XML_creator();
 
+    inline void SetPositivePath(const QString &path){
+        positiveFolderPath = path;
+        positiveImageLoaded = true;
+    }
+    inline void SetNegativePath(const QString &path){
+        negativeFolderPath = path;
+        get_negative_image_list();
+    }
+    inline void SetObjectName(const QString &name){
+        targetname = name;
+    }
+
+    void get_negative_image_list();
+
 private slots:
-    void on_pushButton_negpath_clicked();
-
-    void on_pushButton_pospath_clicked();
-
-    void on_lineEdit_targetname_textChanged(const QString);
-
     void on_pushButton_sample_clicked();
 
     void on_pushButton_XML_clicked();
@@ -45,7 +53,8 @@ private:
     QImage posdisplay;
     QPixmap posdisplay_px;
     QString positiveimgpath;
-    void get_negative_image_list();
+    QString positiveFolderPath;
+    QString negativeFolderPath;
     void write();
 
     void mouseDoubleClickEvent(QMouseEvent *event);

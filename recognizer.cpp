@@ -37,6 +37,7 @@ void Recognizer::onOpSel(){
     settingsUI->groupBox_FacialRec->setVisible(false);
     settingsUI->groupBox_prediction->setVisible(false);
     settingsUI->groupBox_colorHasPath->setVisible(false);
+    settingsUI->groupBox_XML_creator->setVisible(false);
 
     if(settingsUI->pushButton_liveFacial->isChecked()){
 
@@ -60,6 +61,7 @@ void Recognizer::onOpSel(){
         settingsUI->groupBox_ObjDet->setVisible(true);
         StackWidgetIndex = TAB_STILLOBJECT;
     } else if(settingsUI->pushButton_XMLcreator->isChecked()){
+        settingsUI->groupBox_XML_creator->setVisible(true);
         StackWidgetIndex = TAB_XMLCREATOR;
     } else {
         StackWidgetIndex = TAB_SETTING;
@@ -724,4 +726,29 @@ void Recognizer::on_pushButton_setting_clicked()
 void Recognizer::on_pushButton_XMLcreator_clicked()
 {
     onOpSel();
+}
+
+void Recognizer::on_toolButton_XMLPositive_clicked()
+{
+    QString filename;
+    filename = QFileDialog::getExistingDirectory(this,"Positive images folder");
+    if(filename.isNull() || filename.isEmpty())
+        return;
+    settingsUI->lineEdit_XMLPositivePath->setText(filename);
+    xml_creator->SetPositivePath(filename);
+}
+
+void Recognizer::on_toolButton_XMLNegative_clicked()
+{
+    QString filename;
+    filename = QFileDialog::getExistingDirectory(this,"Negative images folder");
+    if(filename.isNull() || filename.isEmpty())
+        return;
+    settingsUI->lineEdit_XMLNegativePath->setText(filename);
+    xml_creator->SetNegativePath(filename);
+}
+
+void Recognizer::on_lineEdit_XMLObjectName_textChanged(const QString &arg1)
+{
+    xml_creator->setObjectName(arg1);
 }

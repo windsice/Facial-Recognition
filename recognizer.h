@@ -101,6 +101,12 @@ private slots:
 
     void on_pushButton_XMLcreator_clicked();
 
+    void on_toolButton_XMLPositive_clicked();
+
+    void on_toolButton_XMLNegative_clicked();
+
+    void on_lineEdit_XMLObjectName_textChanged(const QString &arg1);
+
 private:
     //change layout based on the operation
     void onOpSel();
