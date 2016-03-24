@@ -107,6 +107,8 @@ private slots:
 
     void on_lineEdit_XMLObjectName_textChanged(const QString &arg1);
 
+    void on_toolButton_XMLObjectFolder_clicked();
+
 private:
     //change layout based on the operation
     void onOpSel();

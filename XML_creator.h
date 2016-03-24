@@ -21,6 +21,9 @@ class XML_creator : public QWidget
     Q_OBJECT
 
 public:
+
+    const static QString CASCADETRAININGFOLDER;
+
     explicit XML_creator(QWidget *parent = 0);
     ~XML_creator();
 
@@ -33,7 +36,10 @@ public:
         get_negative_image_list();
     }
     inline void SetObjectName(const QString &name){
-        targetname = name;
+        targetName = name;
+    }
+    inline void SetObjectPath(const QDir &dir){
+        targetPath = dir;
     }
 
     void get_negative_image_list();
@@ -49,12 +55,15 @@ private slots:
 
 private:
     Ui::XML_creator *ui;
-    QString targetname;
+    QString targetName;
+    QDir targetPath;
     QImage posdisplay;
     QPixmap posdisplay_px;
     QString positiveimgpath;
     QString positiveFolderPath;
     QString negativeFolderPath;
+    QString vecPath;
+    QString tempCascadePath;
     void write();
 
     void mouseDoubleClickEvent(QMouseEvent *event);
@@ -66,8 +75,6 @@ private:
     void createPositiveImageVector();
     void haarTraining();
     void resetCascadeFolder();
-
-
 
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
@@ -81,14 +88,13 @@ private:
     int NumberOfPositiveImage;
     int NumberOfPositiveImageDisplayed;
     QString positiveInfoFileName;
+    QString negativeInfoFileName;
     bool mouseIsOnPixmap;
     bool displayRect;
     int processedImageNumber;
     bool stopAllOtherFunction;
 
 QProcess *haarTrain;
-
-
 
 protected:
     void paintEvent(QPaintEvent *p);

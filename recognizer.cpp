@@ -732,7 +732,7 @@ void Recognizer::on_toolButton_XMLPositive_clicked()
 {
     QString filename;
     filename = QFileDialog::getExistingDirectory(this,"Positive images folder");
-    if(filename.isNull() || filename.isEmpty())
+    if(filename.isNull() || filename.isEmpty() || QFileDialog::Rejected)
         return;
     settingsUI->lineEdit_XMLPositivePath->setText(filename);
     xml_creator->SetPositivePath(filename);
@@ -742,7 +742,7 @@ void Recognizer::on_toolButton_XMLNegative_clicked()
 {
     QString filename;
     filename = QFileDialog::getExistingDirectory(this,"Negative images folder");
-    if(filename.isNull() || filename.isEmpty())
+    if(filename.isNull() || filename.isEmpty() || QFileDialog::Rejected)
         return;
     settingsUI->lineEdit_XMLNegativePath->setText(filename);
     xml_creator->SetNegativePath(filename);
@@ -751,4 +751,25 @@ void Recognizer::on_toolButton_XMLNegative_clicked()
 void Recognizer::on_lineEdit_XMLObjectName_textChanged(const QString &arg1)
 {
     xml_creator->setObjectName(arg1);
+}
+
+void Recognizer::on_toolButton_XMLObjectFolder_clicked()
+{
+    QString tempPath;
+    tempPath = QFileDialog::getExistingDirectory
+                (this,"Root folder","",QFileDialog::ShowDirsOnly);
+    if(QFileDialog::Rejected || tempPath.isNull() || tempPath.isEmpty())
+        return;
+
+    QString ObjectName = settingsUI->lineEdit_XMLObjectName->text();
+    if(ObjectName.isEmpty()){
+        QMessageBox::information(this,"Missing Object name", "Please put your object's name first");
+        return;
+    }
+
+    QString ObjectPath = tempPath + "/" + ObjectName;
+    QDir ObjectFolder(ObjectPath + "/");
+    xml_creator->SetObjectPath(ObjectFolder);
+    settingsUI->lineEdit_XMLObjectFolder->setText(ObjectPath);
+
 }

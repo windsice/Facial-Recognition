@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>834</width>
-    <height>1111</height>
+    <height>1160</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -752,7 +752,7 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_20">
+            <layout class="QHBoxLayout" name="horizontalLayout_20" stretch="0,0,1">
              <item>
               <widget class="QLabel" name="label_XMLObjectName">
                <property name="text">
@@ -762,6 +762,44 @@
              </item>
              <item>
               <widget class="QLineEdit" name="lineEdit_XMLObjectName"/>
+             </item>
+             <item>
+              <spacer name="horizontalSpacer_12">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_24">
+             <item>
+              <widget class="QLabel" name="label_XMLObjectName_3">
+               <property name="text">
+                <string>Object Folder</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="lineEdit_XMLObjectFolder">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QToolButton" name="toolButton_XMLObjectFolder">
+               <property name="text">
+                <string>...</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>

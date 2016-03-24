@@ -12,6 +12,8 @@
 #include <QWidget>
 #include <QStringList>
 
+const QString XML_creator::CASCADETRAININGFOLDER = QDir::currentPath() + "/cascade_training";
+
 XML_creator::XML_creator(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::XML_creator)
@@ -31,23 +33,24 @@ XML_creator::~XML_creator()
 void XML_creator::get_negative_image_list(){
     QDirIterator it(negativeFolderPath,QDir::Files);
     int numberofn = 0;
+    negativeInfoFileName = QString("%1%2").arg(targetPath.absolutePath()).arg("neg.txt");
+
+    QFile file;
+    file.setFileName(negativeInfoFileName);
+    if (!file.open(QIODevice::Append | QIODevice::Text)){
+        qDebug()<<"could not open file";
+    }
+    QTextStream out(&file);
     while(it.hasNext()){
 
         it.next();
-        QString filename;
-        filename = QString("%1%2").arg("C:/Users/binguang/Pictures/qttest/").arg(targetname +"bg.txt");
-        QFile file;
-        file.setFileName(filename);
-        if (!file.open(QIODevice::Append | QIODevice::Text)){
-            qDebug()<<"could not open file";
-        }
-
-        QTextStream out(&file);
         out  <<it.filePath()<<'\n';
-        ui->plainTextEdit->appendPlainText(it.fileName());
-        file.close();
         numberofn++;
+
+        ui->plainTextEdit->appendPlainText(it.fileName());
     }
+    file.close();
+
     QString NegativeResult = QString("%1%2").arg( numberofn).arg(" negative image are provided");
     ui->plainTextEdit->appendPlainText(NegativeResult);
     ui->plainTextEdit->appendPlainText("-----------Proccess Completed-----------");
@@ -59,7 +62,11 @@ void XML_creator::on_pushButton_sample_clicked(){
     int placeToStopScanPositiveFile = 0;
     NumberOfPositiveImage = 0;
     QFile file;
-    positiveInfoFileName = QString("%1%2").arg("C:/Users/binguang/Pictures/qttest/").arg(targetname +"info.txt");
+
+    if(!targetPath.exists())
+        targetPath.mkdir(targetPath.absolutePath() + targetName);
+
+    positiveInfoFileName = QString("%1%2").arg(targetPath.absolutePath()).arg("pos.txt");
     file.setFileName(positiveInfoFileName);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){
         //qDebug()<<"could not open file-------";
@@ -290,12 +297,12 @@ void XML_creator::generateFileXML(const int &result)
     }
 
     QProcess *generateXML = new QProcess(this);
-    QString generateXMLprogram = "C:/Users/binguang/Documents/Haar-Training/Haar Training/cascade2xml/haarconv.exe";
+    QString generateXMLprogram = CASCADETRAININGFOLDER + "/haarconv.exe";
     QStringList xmlArgument;
-    xmlArgument<<"C:/Users/binguang/Documents/Haar-Training/Haar Training/Haar Training/cascade2xml/data"
-                  <<"C:/Users/binguang/Documents/Haar-Training/Haar Training/cascade2xml/test.xml"
-                  <<"24"
-                  <<"24";
+    xmlArgument << tempCascadePath
+                << QString("%1%2").arg(targetPath.absolutePath()).arg(targetName + "xml")
+                << "24"
+                << "24";
     generateXML->start(generateXMLprogram,xmlArgument);
 }
 
@@ -303,13 +310,14 @@ void XML_creator::createPositiveImageVector()
 {
     //ui->statusBar->showMessage("Generating XML: vector creation");
     QProcess *createVector = new QProcess(this);
-    QString vectorProgram = "C:/Users/binguang/Documents/Haar-Training/Haar Training/training/createsamples.exe";
+    QString vectorProgram = CASCADETRAININGFOLDER + "/createsamples.exe";
     QStringList vectorArgument;
-    vectorArgument<<"-info"<<"C:/Users/binguang/Documents/Haar-Training/Haar Training/training/positive/info.txt"
-                  <<"-vec"<<"C:/Users/binguang/Documents/Haar-Training/Haar Training/training/vector/test.vec"
-                  <<"-num"<<"204"
-                  <<"-w"<<"24"
-                  <<"-h"<<"24";
+    vecPath = QString("%1%2").arg(targetPath.absolutePath()).arg("vec.vec");
+    vectorArgument<<"-info"<< positiveInfoFileName
+                  <<"-vec" << vecPath
+                  <<"-num" << "204"
+                  <<"-w"   << "24"
+                  <<"-h"   << "24";
     createVector->start(vectorProgram,vectorArgument);
     createVector->waitForFinished(-1);
 
@@ -321,11 +329,16 @@ void XML_creator::haarTraining()
 
     connect(haarTrain,SIGNAL(readyRead()),this,SLOT(getProcessOutput()));
     connect(haarTrain,SIGNAL(finished(int)),this,SLOT(generateFileXML(int)));
-    QString haarTrainingProgram = "C:/Users/binguang/Documents/Haar-Training/Haar Training/training/haartraining.exe";
+    QString haarTrainingProgram = CASCADETRAININGFOLDER + "/haartraining.exe";
     QStringList haarTrainArgument;
-    haarTrainArgument<< "-data"<< "C:/Users/binguang/Documents/Haar-Training/Haar Training/training/cascades"
-                     << "-vec"<< "C:/Users/binguang/Documents/Haar-Training/Haar Training/training/vector/test.vec"
-                     << "-bg" << "C:/Users/binguang/Documents/Haar-Training/Haar Training/training/negative/bg.txt"
+    tempCascadePath = QString("%1%2").arg(targetPath.absolutePath()).arg("cascades");
+    QDir cascade(tempCascadePath);
+    if(!cascade.exists())
+        cascade.mkdir(tempCascadePath);
+
+    haarTrainArgument<< "-data"<< tempCascadePath
+                     << "-vec"<< vecPath
+                     << "-bg" << negativeInfoFileName
                      << "-npos"<< "200"
                      << "-nneg"<< "200"
                      << "-nstages"<< "15"
@@ -340,9 +353,7 @@ void XML_creator::haarTraining()
 
 void XML_creator::resetCascadeFolder()
 {
-    QString cascadeFolderPath = "C:/Users/binguang/Documents/Haar-Training/Haar Training/training/cascades";
-    QDir cascade(cascadeFolderPath);
+    QDir cascade(tempCascadePath);
     cascade.removeRecursively();
-    cascade.mkdir(cascadeFolderPath);
 }
 

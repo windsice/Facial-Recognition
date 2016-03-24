@@ -16,7 +16,6 @@ using namespace std;
 
 class StillDetection {
 
-
 public:
 
     virtual void displayOnGUI() = 0;
