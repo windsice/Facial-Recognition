@@ -179,8 +179,6 @@ void XML_creator::displayPositiveImage(){
 //mouse press event->getting initial position of the rectangle
 void XML_creator::mousePressEvent(QMouseEvent *event){
 
-    qDebug() << event->pos();
-
     if(!stopAllOtherFunction&& event->button()==Qt::LeftButton){
         qpPixmapDimension.setX(0);
         qpPixmapDimension.setY(0);
@@ -212,21 +210,20 @@ void XML_creator::mouseMoveEvent(QMouseEvent *event){
      qpMainFinal = event->pos();
      qpPixmapDimension = qpMainFinal-qpMainInitial;
 
-     if( qpMainInitial.ry()>=getPixmapTopleftPos().ry()
-     && qpMainInitial.rx()>=272+(ui->label_displayposi->width() - ui->label_displayposi->pixmap()->width())/2
-     && qpMainFinal.ry()>=getPixmapTopleftPos().ry()
-     && qpMainFinal.rx()>=272+(ui->label_displayposi->width() - ui->label_displayposi->pixmap()->width())/2
-     && qpMainInitial.ry()<=(getPixmapTopleftPos().ry()+ui->label_displayposi->pixmap()->height())
-     && qpMainInitial.rx()<=(272+ui->label_displayposi->pixmap()->width()+(ui->label_displayposi->width() - ui->label_displayposi->pixmap()->width())/2)
-     && qpMainFinal.ry()<=(getPixmapTopleftPos().ry()+ui->label_displayposi->pixmap()->height())
-     && qpMainFinal.rx()<=(272+ui->label_displayposi->pixmap()->width())+(ui->label_displayposi->width() - ui->label_displayposi->pixmap()->width())/2
-        ){
-            mouseIsOnPixmap = true;
-            displayRect = true;
-         }else{
-            mouseIsOnPixmap = false;
-            displayRect = false;
-         }
+     QPoint p = ui->label_displayposi->mapFromParent(event->pos());
+     QSize Correction = (ui->label_displayposi->size() - ui->label_displayposi->pixmap()->size())/2;
+     int displayW = ui->label_displayposi->pixmap()->width();
+     int displayH = ui->label_displayposi->pixmap()->height();
+     QPoint CorrectedP(p.x() - Correction.width(),p.y() - Correction.height());
+     if(CorrectedP.x() < 0 || CorrectedP.y() < 0 ||
+             CorrectedP.x() > displayW || CorrectedP.y() > displayH)
+     {
+        mouseIsOnPixmap = false;
+        displayRect = false;
+     }else{
+        mouseIsOnPixmap = true;
+        displayRect = true;
+     }
 }
 
 //get dimensions of the marked positive ojbect
