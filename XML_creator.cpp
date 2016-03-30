@@ -179,6 +179,8 @@ void XML_creator::displayPositiveImage(){
 //mouse press event->getting initial position of the rectangle
 void XML_creator::mousePressEvent(QMouseEvent *event){
 
+    qDebug() << event->pos();
+
     if(!stopAllOtherFunction&& event->button()==Qt::LeftButton){
         qpPixmapDimension.setX(0);
         qpPixmapDimension.setY(0);
@@ -243,8 +245,8 @@ QPoint XML_creator::getPixmapTopleftPos()
     QPoint p;
 
     if(!stopAllOtherFunction && positiveImageLoaded){
-        int i = ui->label_displayposi->pos().x()+(ui->label_displayposi->width() - ui->label_displayposi->pixmap()->width())/2;
-        int j = (ui->label_displayposi->height() - ui->label_displayposi->pixmap()->height())/2+25;
+        int i = (ui->label_displayposi->width()-ui->label_displayposi->pixmap()->width())/2+ui->label_displayposi->pos().x();
+        int j = (ui->label_displayposi->height()-ui->label_displayposi->pixmap()->height())/2+ui->label_displayposi->pos().y();
         p.setX(i);
         p.setY(j);
     }
