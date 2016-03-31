@@ -10,7 +10,8 @@
 #include <QFileInfo>
 #include <QtGui>
 #include <QtCore>
-
+#include <QStatusBar>
+#include <QMessageBox>
 
 namespace Ui {
 class XML_creator;
@@ -55,6 +56,8 @@ private slots:
 
 private:
     Ui::XML_creator *ui;
+    QStatusBar *statusBar;
+
     QString targetName;
     QDir targetPath;
     QImage posdisplay;
@@ -91,7 +94,6 @@ private:
     QString negativeInfoFileName;
     bool mouseIsOnPixmap;
     bool displayRect;
-    int processedImageNumber;
     bool stopAllOtherFunction;
 
 QProcess *haarTrain;

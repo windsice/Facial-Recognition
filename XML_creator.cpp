@@ -22,6 +22,9 @@ XML_creator::XML_creator(QWidget *parent) :
 
     positiveImageLoaded = false;
     stopAllOtherFunction = false;
+
+    statusBar = new QStatusBar(this);
+    ui->statusBarLayout->addWidget(statusBar);
 }
 
 XML_creator::~XML_creator()
@@ -33,7 +36,7 @@ XML_creator::~XML_creator()
 void XML_creator::get_negative_image_list(){
     QDirIterator it(negativeFolderPath,QDir::Files);
     int numberofn = 0;
-    negativeInfoFileName = QString("%1%2").arg(targetPath.absolutePath()).arg("neg.txt");
+    negativeInfoFileName = QString("%1/%2").arg(targetPath.absolutePath()).arg("neg.txt");
 
     QFile file;
     file.setFileName(negativeInfoFileName);
@@ -58,43 +61,46 @@ void XML_creator::get_negative_image_list(){
 
 //start creating sample process
 void XML_creator::on_pushButton_sample_clicked(){
-    processedImageNumber = 0;
-    int placeToStopScanPositiveFile = 0;
+    int processedImageNumber = 0;
     NumberOfPositiveImage = 0;
-    QFile file;
 
     if(!targetPath.exists())
         targetPath.mkdir(targetPath.absolutePath() + targetName);
 
-    positiveInfoFileName = QString("%1%2").arg(targetPath.absolutePath()).arg("pos.txt");
-    file.setFileName(positiveInfoFileName);
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text)){
-        //qDebug()<<"could not open file-------";
+    positiveInfoFileName = QString("%1/%2").arg(targetPath.absolutePath()).arg("pos.txt");
 
+    pictureIt = new QDirIterator(positiveFolderPath,QDir::Files);
+    QDirIterator it(positiveFolderPath,QDir::Files);
+    while(it.hasNext()){
+        it.next();
+        NumberOfPositiveImage++;
     }
+
+    // check if there's file exist before, if so, append to it instead of making new file.
+    QFile file;
+    file.setFileName(positiveInfoFileName);
+    if(!file.exists()){
+        statusBar->showMessage("New Object");
+    } else if(file.open(QIODevice::ReadOnly | QIODevice::Text)){
+        statusBar->showMessage("Existed Object");
         QTextStream in(&file);
         QString line;
         while (!in.atEnd()) {
             line = in.readLine();
             processedImageNumber++;
-        }
-
-        file.close();
-        QDirIterator it(positiveFolderPath,QDir::Files);
-        while(it.hasNext()){
-            it.next();
-            NumberOfPositiveImage ++;
+            pictureIt->next();
         }
         NumberOfPositiveImageDisplayed = processedImageNumber;
-        pictureIt = new QDirIterator(positiveFolderPath,QDir::Files);
-        while(placeToStopScanPositiveFile < processedImageNumber){
-            pictureIt->next();
-            placeToStopScanPositiveFile++;
-        }
-    if(processedImageNumber<NumberOfPositiveImage){
-    displayPositiveImage();
-    positiveImageLoaded = true;
-    NumberOfSelectedObject =0;
+
+    } else {
+        QMessageBox::critical(this,"Error","pos.txt exists, but is not readable");
+    }
+    file.close();
+
+    if(processedImageNumber < NumberOfPositiveImage){
+        displayPositiveImage();
+        positiveImageLoaded = true;
+        NumberOfSelectedObject =0;
     }else{
         ui->plainTextEdit->appendPlainText("<All postive images have been processed>");
     }
@@ -114,36 +120,36 @@ void XML_creator::updatePictureIterator(){
 //part 2:move on to the next positive image
 void XML_creator::mouseDoubleClickEvent(QMouseEvent *event){
     if(event->buttons()==Qt::LeftButton
-      && mouseIsOnPixmap
-      && NumberOfPositiveImageDisplayed < NumberOfPositiveImage
-      && NumberOfSelectedObject !=0
-      && !stopAllOtherFunction
-            ){
-            if(pictureIt == NULL){
-                event->ignore();
-                return;
-            }
-            QFile file(positiveInfoFileName);
-            if (!file.open(QIODevice::Append | QIODevice::Text)){
-                qDebug()<<"could not open file";
-            }
-            ui->plainTextEdit->appendPlainText(QString("%1 %2 %3").arg(positiveimgpath).arg(NumberOfSelectedObject).arg(PositiveInfo));
-            QTextStream out(&file);
-            out << QString("%1 %2 %3%4").arg(positiveimgpath).arg(NumberOfSelectedObject).arg(PositiveInfo).arg("\n");
-            file.close();
+          && mouseIsOnPixmap
+          && NumberOfPositiveImageDisplayed < NumberOfPositiveImage
+          && NumberOfSelectedObject !=0
+          && !stopAllOtherFunction){
+        if(pictureIt == NULL){
+            event->ignore();
+            return;
+        }
+        QFile file(positiveInfoFileName);
+        if (!file.open(QIODevice::Append | QIODevice::Text)){
+            qDebug()<<"could not open file";
+        }
+        ui->plainTextEdit->appendPlainText(QString("%1 %2 %3").arg(positiveimgpath).arg(NumberOfSelectedObject).arg(PositiveInfo));
+        QTextStream out(&file);
+        out << QString("%1 %2 %3%4").arg(positiveimgpath).arg(NumberOfSelectedObject).arg(PositiveInfo).arg("\n");
+        file.close();
 
-            if(pictureIt->hasNext() ){
-            event->accept();
-            displayPositiveImage();
-            }
-            PositiveInfo.clear();
-            NumberOfSelectedObject=0;
-            NumberOfPositiveImageDisplayed++;
-            if(NumberOfPositiveImageDisplayed==(NumberOfPositiveImage)){
-                QString positiveResult = QString("%1 %2 %3").arg("Total of").arg( NumberOfPositiveImage).arg(" positive image are proccessed");
-                ui->plainTextEdit->appendPlainText(positiveResult);
-                ui->plainTextEdit->appendPlainText("-----------Proccess Completed-----------");
-            }
+        if(pictureIt->hasNext() ){
+        event->accept();
+        displayPositiveImage();
+        }
+
+        PositiveInfo.clear();
+        NumberOfSelectedObject=0;
+        NumberOfPositiveImageDisplayed++;
+        if(NumberOfPositiveImageDisplayed==(NumberOfPositiveImage)){
+            QString positiveResult = QString("%1 %2 %3").arg("Total of").arg( NumberOfPositiveImage).arg(" positive image are proccessed");
+            ui->plainTextEdit->appendPlainText(positiveResult);
+            ui->plainTextEdit->appendPlainText("-----------Proccess Completed-----------");
+        }
     }
 }
 
@@ -164,15 +170,15 @@ void XML_creator::resizeEvent(QResizeEvent *event){
 void XML_creator::displayPositiveImage(){
     if(pictureIt->hasNext()){
 
-    positiveimgpath = pictureIt->next();
-    posdisplay = QImage(positiveimgpath);
+        positiveimgpath = pictureIt->next();
+        posdisplay = QImage(positiveimgpath);
 
-    posdisplay_px = QPixmap::fromImage(posdisplay);
-    QSize size = ui->label_displayposi->size();
-    ui->label_displayposi->setPixmap(QPixmap::fromImage(posdisplay).scaled(size,Qt::KeepAspectRatio)); //keep picture size ratio
-    pictureRatio = double(QImage(positiveimgpath).width())/double(ui->label_displayposi->pixmap()->width());
+        posdisplay_px = QPixmap::fromImage(posdisplay);
+        QSize size = ui->label_displayposi->size();
+        ui->label_displayposi->setPixmap(QPixmap::fromImage(posdisplay).scaled(size,Qt::KeepAspectRatio)); //keep picture size ratio
+        pictureRatio = double(QImage(positiveimgpath).width())/double(ui->label_displayposi->pixmap()->width());
     }else{
-    ui->label_displayposi->acceptDrops();
+        ui->label_displayposi->acceptDrops();
     }
 }
 
@@ -196,7 +202,7 @@ void XML_creator::mousePressEvent(QMouseEvent *event){
             PositiveInfo = PositiveInfo + cPositiveInfo;
             NumberOfSelectedObject++;
            if(NumberOfPositiveImageDisplayed < NumberOfPositiveImage){
-            //ui->statusBar->showMessage("[x y width height] -> [" +cPositiveInfo+"]",5000);
+                statusBar->showMessage("[x y width height] -> [" +cPositiveInfo+"]",5000);
            }
     }
 }
@@ -280,7 +286,7 @@ void XML_creator::on_pushButton_XML_clicked()
 
 void XML_creator::getProcessOutput()
 {
-    //ui->statusBar->showMessage("Generating XML: cascades creation");
+    statusBar->showMessage("Generating XML: cascades creation");
     ui->plainTextEdit->appendPlainText(haarTrain->readAll());
 }
 
@@ -288,7 +294,7 @@ void XML_creator::generateFileXML(const int &result)
 {
     if(result == QProcess::CrashExit)
     {
-        //ui->statusBar->showMessage("");
+        statusBar->showMessage("");
         ui->plainTextEdit->appendPlainText("Vector creation is completed!");
         return;
     }  else {
@@ -307,11 +313,11 @@ void XML_creator::generateFileXML(const int &result)
 
 void XML_creator::createPositiveImageVector()
 {
-    //ui->statusBar->showMessage("Generating XML: vector creation");
+    statusBar->showMessage("Generating XML: vector creation");
     QProcess *createVector = new QProcess(this);
     QString vectorProgram = CASCADETRAININGFOLDER + "/createsamples.exe";
     QStringList vectorArgument;
-    vecPath = QString("%1%2").arg(targetPath.absolutePath()).arg("vec.vec");
+    vecPath = QString("%1/%2").arg(targetPath.absolutePath()).arg("vec.vec");
     vectorArgument<<"-info"<< positiveInfoFileName
                   <<"-vec" << vecPath
                   <<"-num" << "204"
@@ -330,7 +336,7 @@ void XML_creator::haarTraining()
     connect(haarTrain,SIGNAL(finished(int)),this,SLOT(generateFileXML(int)));
     QString haarTrainingProgram = CASCADETRAININGFOLDER + "/haartraining.exe";
     QStringList haarTrainArgument;
-    tempCascadePath = QString("%1%2").arg(targetPath.absolutePath()).arg("cascades");
+    tempCascadePath = QString("%1/%2").arg(targetPath.absolutePath()).arg("cascades");
     QDir cascade(tempCascadePath);
     if(!cascade.exists())
         cascade.mkdir(tempCascadePath);
