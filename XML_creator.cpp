@@ -292,6 +292,12 @@ void XML_creator::getProcessOutput()
 
 void XML_creator::generateFileXML(const int &result)
 {
+    QDir workingDir(CASCADETRAININGFOLDER);
+    if(!workingDir.exists()){
+        QMessageBox::critical(this,"Error","cascade_training folder not exists");
+        return;
+    }
+
     if(result == QProcess::CrashExit)
     {
         statusBar->showMessage("");
