@@ -18,6 +18,7 @@ Detector::Detector(QWidget *parent) : QWidget(parent), ui(new Ui::Detector)
     ui->label_2->setForegroundRole(QPalette::Light);
     ui->Total_subject_label->setForegroundRole(QPalette::Light);
     ui->status->setForegroundRole(QPalette::Light);
+    ui->checkBox_imageInGray->setStyleSheet("QCheckBox { color: white }");
 
     LoadSettings();
     totalSubjectCount();
@@ -139,7 +140,12 @@ void Detector::ProcessFrame()
     camera->read(frame);
     gray = frame.clone();
     cvtColor(frame,gray,CV_BGR2GRAY);
-    cvtColor(frame,frame,CV_BGR2RGB);
+    if(ui->checkBox_imageInGray->isChecked()){
+        cvtColor(frame,frame,CV_BGR2GRAY);
+        cvtColor(frame,frame,CV_GRAY2RGB);
+    }
+    else
+        cvtColor(frame,frame,CV_BGR2RGB);
 
     if(!detectingThread.isRunning())
     detectingThread = QtConcurrent::run(this,&Detector::detectingFaces);
