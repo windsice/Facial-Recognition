@@ -345,6 +345,10 @@ void XML_creator::haarTraining()
     QString haarTrainingProgram = CASCADETRAININGFOLDER + "/haartraining.exe";
     QStringList haarTrainArgument;
 
+    QDir cascade(tempCascadePath);
+    if(!cascade.exists())
+        cascade.mkdir(tempCascadePath);
+
     haarTrainArgument<< "-data"<< tempCascadePath
                      << "-vec"<< vecPath
                      << "-bg" << negativeInfoFileName
@@ -364,9 +368,6 @@ void XML_creator::resetCascadeFolder()
 {
     tempCascadePath = QString("%1/%2").arg(targetPath.absolutePath()).arg("cascades");
     QDir cascade(tempCascadePath);
-    if(!cascade.exists())
-        cascade.mkdir(tempCascadePath);
-
     cascade.removeRecursively();
 }
 
