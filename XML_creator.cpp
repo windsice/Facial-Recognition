@@ -279,6 +279,13 @@ void XML_creator::paintEvent(QPaintEvent *p)
 void XML_creator::on_pushButton_XML_clicked()
 {
     stopAllOtherFunction = true;
+
+    QDir workingDir(CASCADETRAININGFOLDER);
+    if(!workingDir.exists()){
+        QMessageBox::critical(this,"Error","cascade_training folder not exists");
+        return;
+    }
+
     resetCascadeFolder();
     createPositiveImageVector();
     haarTraining();
@@ -292,11 +299,6 @@ void XML_creator::getProcessOutput()
 
 void XML_creator::generateFileXML(const int &result)
 {
-    QDir workingDir(CASCADETRAININGFOLDER);
-    if(!workingDir.exists()){
-        QMessageBox::critical(this,"Error","cascade_training folder not exists");
-        return;
-    }
 
     if(result == QProcess::CrashExit)
     {
@@ -342,10 +344,6 @@ void XML_creator::haarTraining()
     connect(haarTrain,SIGNAL(finished(int)),this,SLOT(generateFileXML(int)));
     QString haarTrainingProgram = CASCADETRAININGFOLDER + "/haartraining.exe";
     QStringList haarTrainArgument;
-    tempCascadePath = QString("%1/%2").arg(targetPath.absolutePath()).arg("cascades");
-    QDir cascade(tempCascadePath);
-    if(!cascade.exists())
-        cascade.mkdir(tempCascadePath);
 
     haarTrainArgument<< "-data"<< tempCascadePath
                      << "-vec"<< vecPath
@@ -364,7 +362,11 @@ void XML_creator::haarTraining()
 
 void XML_creator::resetCascadeFolder()
 {
+    tempCascadePath = QString("%1/%2").arg(targetPath.absolutePath()).arg("cascades");
     QDir cascade(tempCascadePath);
+    if(!cascade.exists())
+        cascade.mkdir(tempCascadePath);
+
     cascade.removeRecursively();
 }
 
