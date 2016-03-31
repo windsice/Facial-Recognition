@@ -45,7 +45,7 @@ void Recognizer::onOpSel(){
         settingsUI->groupBox_preparation->setVisible(true);
         settingsUI->groupBox_ObjDet->setVisible(true);
         settingsUI->groupBox_FacialRec->setVisible(true);
-        StackWidgetIndex = TAB_CAMERA;
+        StackWidgetIndex = TAB_LIVEFACIAL;
 
     } else if(settingsUI->pushButton_stillFacial->isChecked()){
 
@@ -53,7 +53,7 @@ void Recognizer::onOpSel(){
         settingsUI->groupBox_ObjDet->setVisible(true);
         settingsUI->groupBox_FacialRec->setVisible(true);
         settingsUI->groupBox_prediction->setVisible(true);
-        StackWidgetIndex = TAB_SETTING;
+        StackWidgetIndex = TAB_STILLFACIAL;
         
     } else if(settingsUI->pushButton_stillObject->isChecked()){
 
@@ -64,7 +64,7 @@ void Recognizer::onOpSel(){
         settingsUI->groupBox_XML_creator->setVisible(true);
         StackWidgetIndex = TAB_XMLCREATOR;
     } else {
-        StackWidgetIndex = TAB_SETTING;
+        StackWidgetIndex = TAB_EMPTY;
     }
 }
 
@@ -72,8 +72,7 @@ bool Recognizer::passParaToOp(){
     if(settingsUI->stackedWidget->currentIndex() == StackWidgetIndex)
         return false;
 
-    settingsUI->stackedWidget->setCurrentIndex(StackWidgetIndex);
-    if(StackWidgetIndex == TAB_CAMERA)
+    if(StackWidgetIndex == TAB_LIVEFACIAL)
     {
         detector->setCameraDevice(settingsUI->CameraNumber->value());
         detector->setCameraResolution(settingsUI->comboBox_CameraResolution->currentData().toSize());
@@ -98,10 +97,21 @@ bool Recognizer::passParaToOp(){
         if(!ColorClassifierPath.isEmpty())
             stillObject->setColorClassifier(ColorClassifierPath);
     }
+    else if(StackWidgetIndex == TAB_XMLCREATOR){
+        if(settingsUI->lineEdit_XMLObjectName->text().isEmpty() ||
+            settingsUI->lineEdit_XMLObjectFolder->text().isEmpty() ||
+            settingsUI->lineEdit_XMLPositivePath->text().isEmpty()){
+                QMessageBox::information(this,"Wait","Missing information");
+                return false;
+        }
+    }
     else
     {
         detector->Stop();
     }
+
+    settingsUI->stackedWidget->setCurrentIndex(StackWidgetIndex);
+
     return true;
 }
 
@@ -137,18 +147,18 @@ void Recognizer::Initialization()
     }
 
     img_height = img_width = 0;
-    StackWidgetIndex = TAB_SETTING;
+    StackWidgetIndex = TAB_EMPTY;
 }
 
 //construct all other tabs
 void Recognizer::TabsInit(){
     //Camera
     detector = new Detector(this);
-    settingsUI->stackedWidget->insertWidget(TAB_CAMERA,detector);
+    settingsUI->stackedWidget->insertWidget(TAB_LIVEFACIAL,detector);
     settingsUI->pushButton_setting->setVisible(false);
     QPalette Pal;
     Pal.setColor(QPalette::Background,Qt::black);
-    settingsUI->stackedWidget->widget(TAB_CAMERA)->setAutoFillBackground(true);
+    settingsUI->stackedWidget->widget(TAB_LIVEFACIAL)->setAutoFillBackground(true);
     settingsUI->stackedWidget->setPalette(Pal);
 
     //stillObject
@@ -715,7 +725,7 @@ void Recognizer::on_pushButton_action_clicked()
 //the blue left arrow on the bottom, which always back to setting when clicked
 void Recognizer::on_pushButton_setting_clicked()
 {
-    StackWidgetIndex = TAB_SETTING;
+    StackWidgetIndex = TAB_EMPTY;
     if(passParaToOp()){
         settingsUI->pushButton_action->setVisible(true);
         settingsUI->pushButton_setting->setVisible(false);

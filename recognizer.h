@@ -43,7 +43,7 @@ public:
     static Mat norm_0_255(InputArray _src);
     void read_csv(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';');
 
-    enum TabIndex { TAB_SETTING,TAB_CAMERA,TAB_STILLOBJECT,TAB_XMLCREATOR};
+    enum TabIndex {TAB_EMPTY,TAB_STILLFACIAL,TAB_LIVEFACIAL,TAB_STILLOBJECT,TAB_XMLCREATOR};
     static const QList<QSize> RESOLUTION;
 
 private slots:
