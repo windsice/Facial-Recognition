@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>834</width>
-    <height>1160</height>
+    <height>1190</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -357,38 +357,6 @@
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_16">
                  <item>
-                  <layout class="QHBoxLayout" name="horizontalLayout_15">
-                   <item>
-                    <widget class="QLabel" name="label_3">
-                     <property name="text">
-                      <string>Upper Bound:</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QSpinBox" name="spinBox_UH">
-                     <property name="maximum">
-                      <number>179</number>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QSpinBox" name="spinBox_US">
-                     <property name="maximum">
-                      <number>255</number>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QSpinBox" name="spinBox_UV">
-                     <property name="maximum">
-                      <number>255</number>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                 <item>
                   <layout class="QHBoxLayout" name="horizontalLayout_12">
                    <item>
                     <widget class="QLabel" name="label_2">
@@ -413,6 +381,38 @@
                    </item>
                    <item>
                     <widget class="QSpinBox" name="spinBox_LV">
+                     <property name="maximum">
+                      <number>255</number>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_15">
+                   <item>
+                    <widget class="QLabel" name="label_3">
+                     <property name="text">
+                      <string>Upper Bound:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QSpinBox" name="spinBox_UH">
+                     <property name="maximum">
+                      <number>179</number>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QSpinBox" name="spinBox_US">
+                     <property name="maximum">
+                      <number>255</number>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QSpinBox" name="spinBox_UV">
                      <property name="maximum">
                       <number>255</number>
                      </property>

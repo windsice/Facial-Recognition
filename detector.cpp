@@ -40,6 +40,17 @@ void Detector::resizeEvent(QResizeEvent *event)
     ScreenSize = this->size();
 }
 
+void Detector::setColorBound(int lowerH, int lowerS, int lowerV,
+                             int upperH, int upperS, int upperV)
+{
+    Color_lowerBound[0] = lowerH;
+    Color_lowerBound[1] = lowerS;
+    Color_lowerBound[2] = lowerV;
+    Color_upperBound[0] = upperH;
+    Color_upperBound[1] = upperS;
+    Color_upperBound[2] = upperV;
+}
+
 void Detector::setImageWidth(const int &w)
 {
     img_width = w;
@@ -79,6 +90,11 @@ void Detector::setCameraDevice(const int &n)
 void Detector::setClassifier(const QString &path)
 {
     haar_cascade.load(path.toStdString());
+}
+
+void Detector::setColorClassifier(const QString &path)
+{
+    Color_haar_cascade.load(path.toStdString());
 }
 
 void Detector::setModels(bool aIsUsed, const Ptr<FaceRecognizer> &a, bool bIsUsed, const Ptr<FaceRecognizer> &b, bool cIsUsed,const Ptr<FaceRecognizer> &c)
@@ -134,12 +150,20 @@ int Detector::getFrameRate()
 
 void Detector::ProcessFrame()
 {
-    Mat frame;
+    Mat frame,frameHSV;
     Mat img,img_resized;
     Captured_pic = new QLabel;
     camera->read(frame);
     gray = frame.clone();
     cvtColor(frame,gray,CV_BGR2GRAY);
+    cvtColor(frame,frameHSV,CV_BGR2HSV);
+    if(!Color_haar_cascade.empty()){
+        cv::inRange(frameHSV,
+                    cv::Scalar(Color_lowerBound[0],Color_lowerBound[1],Color_lowerBound[2]),
+                    cv::Scalar(Color_upperBound[0],Color_upperBound[1],Color_upperBound[2]),
+                    Color_gray);
+    }
+
     if(ui->checkBox_imageInGray->isChecked()){
         cvtColor(frame,frame,CV_BGR2GRAY);
         cvtColor(frame,frame,CV_GRAY2RGB);
@@ -148,9 +172,14 @@ void Detector::ProcessFrame()
         cvtColor(frame,frame,CV_BGR2RGB);
 
     if(!detectingThread.isRunning())
-    detectingThread = QtConcurrent::run(this,&Detector::detectingFaces);
+        detectingThread = QtConcurrent::run(this,&Detector::detectingFaces);
 
-    for(unsigned int i=0;i < faces.size(); i++)
+    if(!detectingColorThread.isRunning())
+        detectingColorThread = QtConcurrent::run(this,&Detector::detectingColorFaces);
+
+    Point_<int> c;
+    bool imageColorMatch;
+    for(unsigned int i=0; i < faces.size(); i++)
     {
         Rect face_i = faces[i];
         Mat face = gray(face_i);
@@ -175,7 +204,22 @@ void Detector::ProcessFrame()
         int pos_x = std::max(face_i.tl().x - 10,0);
         int pos_y = std::max(face_i.tl().y - 10,0);
 
-        rectangle(frame,face_i,CV_RGB(0,255,0),1);
+        Rect Color_face_i;
+        imageColorMatch = false;
+        for(unsigned int i=0;i < Color_faces.size(); i++){
+            Color_face_i = Color_faces[i];
+            c.x = (Color_face_i.tl().x+Color_face_i.br().x)/2;
+            c.y = (Color_face_i.tl().y+Color_face_i.br().y)/2;
+            if(face_i.contains(c)){
+                imageColorMatch = true;
+                break;
+            }
+        }
+        if(imageColorMatch)
+            rectangle(frame,face_i,CV_RGB(255,0,0),1);
+        else
+            rectangle(frame,face_i,CV_RGB(0,255,0),1);
+
         putText(frame,box_text,Point(pos_x,pos_y),FONT_HERSHEY_PLAIN,1.0,CV_RGB(0,255,0),1.0);
 
         img = Mat(frame,face_i);
@@ -185,6 +229,7 @@ void Detector::ProcessFrame()
         Captured_pic->setPixmap(QPixmap::fromImage(*Captured_frameImg));
         if(capturing_img)
             layout->addWidget(Captured_pic);
+
     }
 
     QImage frameImg((uchar*)frame.data,frame.cols,frame.rows,frame.step,QImage::Format_RGB888);
@@ -197,6 +242,7 @@ void Detector::ProcessFrame()
 void Detector::ClearFaces()
 {
     faces.clear();
+    Color_faces.clear();
 }
 
 void Detector::detectingFaces()
@@ -206,8 +252,21 @@ void Detector::detectingFaces()
 
     vector< Rect_<int> > temp_faces;
     haar_cascade.detectMultiScale(gray,temp_faces);
+
     if(temp_faces.size()>0)
         faces = temp_faces;
+}
+
+void Detector::detectingColorFaces()
+{
+    if(!timer->isActive())
+        return;
+
+    vector< Rect_<int> > temp_color_faces;
+    Color_haar_cascade.detectMultiScale(Color_gray,temp_color_faces);
+
+    if(temp_color_faces.size()>0)
+        Color_faces = temp_color_faces;
 }
 
 void Detector::totalSubjectCount()

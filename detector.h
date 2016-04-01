@@ -39,6 +39,7 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 public:
+    void setColorBound(int lowerH, int lowerS, int lowerV, int upperH, int upperS, int upperV);
     void setImageWidth(const int&);
     void setImageHeight(const int&);
     void setCameraResolution(const QSize&);
@@ -47,6 +48,7 @@ public:
     void setUpdatingTime(const int&);
     void setCameraDevice(const int &);
     void setClassifier(const QString &);
+    void setColorClassifier(const QString &path);
     void setModels(bool aIsUsed, const Ptr<FaceRecognizer> &, bool bIsUsed, const Ptr<FaceRecognizer> &, bool cIsUsed, const Ptr<FaceRecognizer> &);
     bool Capturing();
     void Stop();
@@ -71,6 +73,7 @@ private:
     void startTimers();
     void stopTimers();
     void detectingFaces();
+    void detectingColorFaces();
     void totalSubjectCount();
     void SaveSettings();
     void LoadSettings();
@@ -93,20 +96,30 @@ private:
 
     QImage *Captured_frameImg;
     QString RootPath;
-    Mat frame;
     bool capturing_img;
     bool detecting;
     QLabel *Captured_pic;
     QBoxLayout *layout;
     CascadeClassifier haar_cascade;
+    CascadeClassifier Color_haar_cascade;
+
+    int Color_lowerBound[3];
+    int Color_upperBound[3];
+
     vector< Rect_<int> > faces;
+    vector< Rect_<int> > Color_faces;
+
     QFuture<void> detectingThread;
+    QFuture<void> detectingColorThread;
     int updatingTime;
     int classifierDurationTime;
     QSize ScreenSize;
     QTimer *timer;
     QTimer *clearFacesTimer;
+
+    Mat frame;
     Mat gray;
+    Mat Color_gray;
 
     bool CameraStarted; //unable to find a way to check if camera is null, thus use this flag.
 };

@@ -38,6 +38,8 @@ void Recognizer::onOpSel(){
     settingsUI->groupBox_prediction->setVisible(false);
     settingsUI->groupBox_colorHasPath->setVisible(false);
     settingsUI->groupBox_XML_creator->setVisible(false);
+    emit settingsUI->lineEdit_colorClassifier->textChanged(
+                settingsUI->lineEdit_colorClassifier->text());
 
     if(settingsUI->pushButton_liveFacial->isChecked()){
 
@@ -81,12 +83,28 @@ bool Recognizer::passParaToOp(){
         detector->setImageWidth(img_width);
         detector->setUpdatingTime(settingsUI->CameraUpdateTime->value());
         detector->setClassifierDuration(settingsUI->ClassifierDuration->value());
+
+        detector->setColorBound(settingsUI->spinBox_LH->value(),
+                                settingsUI->spinBox_LS->value(),
+                                settingsUI->spinBox_LV->value(),
+                                settingsUI->spinBox_UH->value(),
+                                settingsUI->spinBox_US->value(),
+                                settingsUI->spinBox_UV->value());
+
         if(!ClassifierPath.isEmpty()){
             try{
             detector->setClassifier(ClassifierPath);
             } catch( Exception e)
             {
                 QMessageBox::critical(this,"Error","Classifier, Something wrong with the classifier");
+            }
+        }
+        if(!ColorClassifierPath.isEmpty()){
+            try{
+            detector->setColorClassifier(ColorClassifierPath);
+            } catch( Exception e)
+            {
+                QMessageBox::critical(this,"Error","Classifier, Something wrong with the Color classifier");
             }
         }
         detector->Capturing();
@@ -605,7 +623,7 @@ void Recognizer::on_UpdateExisting_checkBox_clicked(bool checked)
 //for Updating LBPH
 void Recognizer::on_UpdateLocation_lineEdit_textChanged(const QString &arg1)
 {
-   UpdateExistingDirectory = arg1;
+    UpdateExistingDirectory = arg1;
 }
 
 //for Updating LBPH
