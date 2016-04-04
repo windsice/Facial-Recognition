@@ -31,6 +31,7 @@ Recognizer::~Recognizer()
 //turn visibility based on user's intended operation
 void Recognizer::onOpSel(){
 
+
     settingsUI->groupBox_CamSet->setVisible(false);
     settingsUI->groupBox_preparation->setVisible(false);
     settingsUI->groupBox_ObjDet->setVisible(false);
@@ -92,28 +93,22 @@ bool Recognizer::passParaToOp(){
                                 settingsUI->spinBox_UV->value());
 
         if(!ClassifierPath.isEmpty()){
-            try{
-            detector->setClassifier(ClassifierPath);
-            } catch( Exception e)
-            {
-                QMessageBox::critical(this,"Error","Classifier, Something wrong with the classifier");
-            }
+            if(!detector->setClassifier(ClassifierPath))
+                qDebug() << "detector Classifier not set";
         }
         if(!ColorClassifierPath.isEmpty()){
-            try{
-            detector->setColorClassifier(ColorClassifierPath);
-            } catch( Exception e)
-            {
-                QMessageBox::critical(this,"Error","Classifier, Something wrong with the Color classifier");
-            }
+            if(!detector->setColorClassifier(ColorClassifierPath))
+                qDebug() << "detector Color Classifier not set";
         }
         detector->Capturing();
     }
     else if(StackWidgetIndex == TAB_STILLOBJECT){
         if(!ClassifierPath.isEmpty())
-            stillObject->setClassifier(ClassifierPath);
+            if(!stillObject->setClassifier(ClassifierPath))
+                qDebug() << "stillObject classifier not set";
         if(!ColorClassifierPath.isEmpty())
-            stillObject->setColorClassifier(ColorClassifierPath);
+            if(!stillObject->setColorClassifier(ColorClassifierPath))
+                qDebug() << "stillObject color classifier not set";
     }
     else if(StackWidgetIndex == TAB_XMLCREATOR){
         if(settingsUI->lineEdit_XMLObjectName->text().isEmpty() ||
@@ -170,6 +165,7 @@ void Recognizer::Initialization()
 
 //construct all other tabs
 void Recognizer::TabsInit(){
+
     //Camera
     detector = new Detector(this);
     settingsUI->stackedWidget->insertWidget(TAB_LIVEFACIAL,detector);
@@ -250,9 +246,7 @@ void Recognizer::Training()
         emit Recognizer::TrainingObjects("FisherFace");
         FisherFaceModel->train(images, labels);
     }
-
     emit Recognizer::TrainingObjects("End");
-
 }
 
 //save path (mostly) for next time

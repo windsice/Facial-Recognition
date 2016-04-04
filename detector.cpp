@@ -87,14 +87,24 @@ void Detector::setCameraDevice(const int &n)
     CameraStarted = true;
 }
 
-void Detector::setClassifier(const QString &path)
+bool Detector::setClassifier(const QString &path)
 {
-    haar_cascade.load(path.toStdString());
+    try{
+        haar_cascade.load(path.toStdString());
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 
-void Detector::setColorClassifier(const QString &path)
+bool Detector::setColorClassifier(const QString &path)
 {
-    Color_haar_cascade.load(path.toStdString());
+    try{
+        Color_haar_cascade.load(path.toStdString());
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 
 void Detector::setModels(bool aIsUsed, const Ptr<FaceRecognizer> &a, bool bIsUsed, const Ptr<FaceRecognizer> &b, bool cIsUsed,const Ptr<FaceRecognizer> &c)
@@ -150,31 +160,35 @@ int Detector::getFrameRate()
 
 void Detector::ProcessFrame()
 {
-    Mat frame,frameHSV;
+    Mat frameBGR,frameHSV,frameRGB;
     Mat img,img_resized;
     Captured_pic = new QLabel;
-    camera->read(frame);
-    gray = frame.clone();
-    cvtColor(frame,gray,CV_BGR2GRAY);
-    cvtColor(frame,frameHSV,CV_BGR2HSV);
+    camera->read(frameBGR);
+    if(gray_mutex.tryLock()){
+        cvtColor(frameBGR,gray,CV_BGR2GRAY);
+        gray_mutex.unlock();
+    }
+    cvtColor(frameBGR,frameHSV,CV_BGR2HSV);
     if(!Color_haar_cascade.empty()){
-        cv::inRange(frameHSV,
-                    cv::Scalar(Color_lowerBound[0],Color_lowerBound[1],Color_lowerBound[2]),
-                    cv::Scalar(Color_upperBound[0],Color_upperBound[1],Color_upperBound[2]),
-                    Color_gray);
+        if(Color_gray_mutex.tryLock()){
+            cv::inRange(frameHSV,
+                        cv::Scalar(Color_lowerBound[0],Color_lowerBound[1],Color_lowerBound[2]),
+                        cv::Scalar(Color_upperBound[0],Color_upperBound[1],Color_upperBound[2]),
+                        Color_gray);
+            Color_gray_mutex.unlock();
+        }
     }
 
     if(ui->checkBox_imageInGray->isChecked()){
-        cvtColor(frame,frame,CV_BGR2GRAY);
-        cvtColor(frame,frame,CV_GRAY2RGB);
+        cvtColor(gray,frameRGB,CV_GRAY2RGB);
     }
     else
-        cvtColor(frame,frame,CV_BGR2RGB);
+        cvtColor(frameBGR,frameRGB,CV_BGR2RGB);
 
-    if(!detectingThread.isRunning())
+    if(detectingThread.isFinished())
         detectingThread = QtConcurrent::run(this,&Detector::detectingFaces);
 
-    if(!detectingColorThread.isRunning())
+    if(detectingColorThread.isFinished())
         detectingColorThread = QtConcurrent::run(this,&Detector::detectingColorFaces);
 
     Point_<int> c;
@@ -185,22 +199,8 @@ void Detector::ProcessFrame()
         Mat face = gray(face_i);
         Mat face_resized;
         cv::resize(face,face_resized,Size(img_width,img_height),1.0,1.0,INTER_CUBIC);
-        String box_text;
-        if(LBPHUsed)
-        {
-            LBPHPrediction = LBPHModel->predict(face_resized);
-            box_text = format("LBPH Prediction = %d ",LBPHPrediction);
-        }
-        if(EigenFaceUsed)
-        {
-            EigenFacePrediction = EigenFaceModel->predict(face_resized);
-            box_text.append("EigenFace Prediction = %d ",EigenFacePrediction);
-        }
-        if(FisherFaceUsed)
-        {
-            FisherFacePrediction = FisherFaceModel->predict(face_resized);
-            box_text.append("LBPHPrediction = %d ",FisherFacePrediction);
-        }
+        String box_text = FacialPrediction(face_resized);
+
         int pos_x = std::max(face_i.tl().x - 10,0);
         int pos_y = std::max(face_i.tl().y - 10,0);
 
@@ -216,13 +216,13 @@ void Detector::ProcessFrame()
             }
         }
         if(imageColorMatch)
-            rectangle(frame,face_i,CV_RGB(255,0,0),1);
+            rectangle(frameRGB,face_i,CV_RGB(255,0,0),1);
         else
-            rectangle(frame,face_i,CV_RGB(0,255,0),1);
+            rectangle(frameRGB,face_i,CV_RGB(0,255,0),1);
 
-        putText(frame,box_text,Point(pos_x,pos_y),FONT_HERSHEY_PLAIN,1.0,CV_RGB(0,255,0),1.0);
+        putText(frameRGB,box_text,Point(pos_x,pos_y),FONT_HERSHEY_PLAIN,1.0,CV_RGB(0,255,0),1.0);
 
-        img = Mat(frame,face_i);
+        img = Mat(frameRGB,face_i);
         cv::resize(img,img_resized,Size(img_width,img_height),1.0,1.0,INTER_CUBIC);
 
         Captured_frameImg = new QImage((uchar*)img_resized.data,img_resized.cols,img_resized.rows,img_resized.step,QImage::Format_RGB888);
@@ -232,7 +232,7 @@ void Detector::ProcessFrame()
 
     }
 
-    QImage frameImg((uchar*)frame.data,frame.cols,frame.rows,frame.step,QImage::Format_RGB888);
+    QImage frameImg((uchar*)frameRGB.data,frameRGB.cols,frameRGB.rows,frameRGB.step,QImage::Format_RGB888);
     ui->CameraScreen->setPixmap(QPixmap::fromImage(frameImg).scaled(ScreenSize,Qt::KeepAspectRatio));
 
     if(capturing_img)
@@ -251,7 +251,9 @@ void Detector::detectingFaces()
         return;
 
     vector< Rect_<int> > temp_faces;
+    gray_mutex.lock();
     haar_cascade.detectMultiScale(gray,temp_faces);
+    gray_mutex.unlock();
 
     if(temp_faces.size()>0)
         faces = temp_faces;
@@ -263,10 +265,32 @@ void Detector::detectingColorFaces()
         return;
 
     vector< Rect_<int> > temp_color_faces;
+    Color_gray_mutex.lock();
     Color_haar_cascade.detectMultiScale(Color_gray,temp_color_faces);
+    Color_gray_mutex.unlock();
 
     if(temp_color_faces.size()>0)
         Color_faces = temp_color_faces;
+}
+
+//enlarge or shrink the rect
+Rect Detector::transformRect(Mat image, Rect rect, float percentage)
+{
+    int newWidth,newHeight;
+    int newX,newY;
+    newWidth = rect.width * percentage;
+    newHeight = rect.height * percentage;
+    newX = rect.x - (newWidth - rect.width)/2;
+    newY = rect.y - (newHeight - rect.height)/2;
+
+    if(newX + newWidth > image.cols){
+        newWidth -= newX + newWidth - image.cols;
+    }
+    if(newY + newHeight > image.rows){
+        newHeight -= newY + newHeight - image.rows;
+    }
+    Rect newRect(newX,newY,newWidth,newHeight);
+    return newRect;
 }
 
 void Detector::totalSubjectCount()
@@ -385,4 +409,25 @@ void Detector::stopTimers()
 {
     timer->stop();
     clearFacesTimer->stop();
+}
+
+String Detector::FacialPrediction(Mat face_resized)
+{
+    String box_text;
+    if(LBPHUsed)
+    {
+        LBPHPrediction = LBPHModel->predict(face_resized);
+        box_text.append("LBPH Prediction = %d ",LBPHPrediction);
+    }
+    if(EigenFaceUsed)
+    {
+        EigenFacePrediction = EigenFaceModel->predict(face_resized);
+        box_text.append("EigenFace Prediction = %d ",EigenFacePrediction);
+    }
+    if(FisherFaceUsed)
+    {
+        FisherFacePrediction = FisherFaceModel->predict(face_resized);
+        box_text.append("LBPHPrediction = %d ",FisherFacePrediction);
+    }
+    return box_text;
 }

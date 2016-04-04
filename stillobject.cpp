@@ -183,10 +183,12 @@ void StillObject::performDetection(){
                                mat_picture_rgb.step,
                                QImage::Format_RGB888);
 
-    if(mat_colorPick_object.empty())
-        colorPicker(mat_picture_hsv);
-    else
-        colorPicker(mat_colorPick_object);
+    if(ui->checkBox_ColorCheck->isChecked()){
+        if(mat_colorPick_object.empty())
+            colorPicker(mat_picture_hsv);
+        else
+            colorPicker(mat_colorPick_object);
+    }
 
     emit StillObject::doneDetection();
 }
@@ -240,8 +242,6 @@ QImage StillObject::colorPicker(cv::Mat image)
         mat_colorResult = wrap + limit;
 
     } else {
-
-
         cv::inRange(image,
                     cv::Scalar(LowerBound_color[0],LowerBound_color[1],LowerBound_color[2]),
                     cv::Scalar(UpperBound_color[0],UpperBound_color[1],UpperBound_color[2]),
@@ -250,13 +250,11 @@ QImage StillObject::colorPicker(cv::Mat image)
 
     cv::cvtColor(mat_colorResult,mat_colorResult,CV_GRAY2RGB);
 
-
     imgForColorRange = new QImage((uchar*)mat_colorResult.data,
                                   mat_colorResult.cols,
                                   mat_colorResult.rows,
                                   mat_colorResult.step,
                                   QImage::Format_RGB888);
-
     return *imgForColorRange;
 }
 
@@ -264,7 +262,8 @@ void StillObject::resizeProcessedPictures()
 {
     QSize size = ui->label_StillObject->size();
     ui->label_StillObject->setPixmap(QPixmap::fromImage(*imgForDisplay).scaled(size,Qt::KeepAspectRatio));
-    ui->label_ColorRange->setPixmap(QPixmap::fromImage(*imgForColorRange).scaled(size,Qt::KeepAspectRatio));
+    if(ui->checkBox_ColorCheck->isChecked())
+        ui->label_ColorRange->setPixmap(QPixmap::fromImage(*imgForColorRange).scaled(size,Qt::KeepAspectRatio));
 }
 
 //Check if the value is within 0 and 255, if not return the bound.

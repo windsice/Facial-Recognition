@@ -47,8 +47,8 @@ public:
     void setClassifierDuration(const int &);
     void setUpdatingTime(const int&);
     void setCameraDevice(const int &);
-    void setClassifier(const QString &);
-    void setColorClassifier(const QString &path);
+    bool setClassifier(const QString &);
+    bool setColorClassifier(const QString &path);
     void setModels(bool aIsUsed, const Ptr<FaceRecognizer> &, bool bIsUsed, const Ptr<FaceRecognizer> &, bool cIsUsed, const Ptr<FaceRecognizer> &);
     bool Capturing();
     void Stop();
@@ -72,8 +72,10 @@ private slots:
 private:
     void startTimers();
     void stopTimers();
+    String FacialPrediction(Mat face_resized);
     void detectingFaces();
     void detectingColorFaces();
+    Rect transformRect(Mat image, Rect rect, float percentage);
     void totalSubjectCount();
     void SaveSettings();
     void LoadSettings();
@@ -117,8 +119,9 @@ private:
     QTimer *timer;
     QTimer *clearFacesTimer;
 
-    Mat frame;
+    QMutex gray_mutex;
     Mat gray;
+    QMutex Color_gray_mutex;
     Mat Color_gray;
 
     bool CameraStarted; //unable to find a way to check if camera is null, thus use this flag.
