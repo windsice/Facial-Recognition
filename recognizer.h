@@ -15,8 +15,8 @@
 #include "opencv2/contrib/contrib.hpp"
 #include "opencv2/highgui/highgui.hpp"
 
-#include "detector.h"
 #include "stillobject.h"
+#include "detector.h"
 #include "XML_creator.h"
 
 #include <iostream>
@@ -111,6 +111,8 @@ private slots:
     void on_toolButton_XMLObjectFolder_clicked();
 
     void on_comboBox_colorClassifierAlgorithm_currentIndexChanged(int index);
+
+    void on_spinBox_colorPercentage_valueChanged(int arg1);
 
 private:
     //change layout based on the operation

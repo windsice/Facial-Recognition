@@ -20,6 +20,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/objdetect/objdetect.hpp"
 
+#include "stilldetection.h" //cv::Vec3b ConvertColor( cv::Vec3b src, int code)
+
 enum ColorAlgorithm {NOTUSE, CLASS2_ENTIRE, CLASS2_RECTONLY, CLASS1_COLORPERCENTAGE};
 
 using namespace std;
@@ -46,6 +48,7 @@ public:
     void setImageHeight(const int&);
     void setCameraResolution(const QSize&);
     void setColorAlgorithm(const ColorAlgorithm&);
+    void setColorPercentage(const int &p);
 
     void setClassifierDuration(const int &);
     void setUpdatingTime(const int&);
@@ -78,7 +81,9 @@ private:
     String FacialPrediction(Mat face_resized);
     void detectingFaces();
     void detectingColorFaces();
+    void getColorPercentage(const Mat &image);
     void setColor_gray(const Mat &imageBGR);
+    bool pixelColorRangeMatch(const Mat &image, const int &x, const int &y);
     Rect transformRect(const Mat &image, const Rect &rect, float percentage);
     void totalSubjectCount();
     void SaveSettings();
@@ -124,6 +129,8 @@ private:
     QTimer *clearFacesTimer;
 
     ColorAlgorithm colorAlgorithm;
+    int colorPercentageGoal;
+    int colorPercentage;
 
     QMutex gray_mutex;
     Mat gray;

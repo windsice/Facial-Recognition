@@ -12,6 +12,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/objdetect/objdetect.hpp"
 
+cv::Vec3b ConvertColor( cv::Vec3b src, int code);
+
 using namespace std;
 
 class StillDetection {
@@ -53,17 +55,6 @@ public:
         } catch (...) {
             return false;
         }
-    }
-
-    cv::Vec3b ConvertColor( cv::Vec3b src, int code)
-    {
-        cv::Mat srcMat(1, 1, CV_8UC3 );
-        *srcMat.ptr< cv::Vec3b >( 0 ) = src;
-
-        cv::Mat resMat;
-        cv::cvtColor( srcMat, resMat, code);
-
-        return *resMat.ptr< cv::Vec3b >( 0 );
     }
 
 protected:

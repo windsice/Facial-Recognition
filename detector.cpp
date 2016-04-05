@@ -16,6 +16,7 @@ Detector::Detector(QWidget *parent) : QWidget(parent), ui(new Ui::Detector)
 
     ui->label->setForegroundRole(QPalette::Light);
     ui->label_2->setForegroundRole(QPalette::Light);
+    ui->label_colorPercentage->setForegroundRole(QPalette::Light);
     ui->Total_subject_label->setForegroundRole(QPalette::Light);
     ui->status->setForegroundRole(QPalette::Light);
     ui->checkBox_imageInGray->setStyleSheet("QCheckBox { color: white }");
@@ -23,6 +24,7 @@ Detector::Detector(QWidget *parent) : QWidget(parent), ui(new Ui::Detector)
     LoadSettings();
     totalSubjectCount();
     CameraStarted = false;
+    colorPercentage = 0;
 }
 
 Detector::~Detector()
@@ -73,6 +75,11 @@ void Detector::setCameraResolution(const QSize &size){
 void Detector::setColorAlgorithm(const ColorAlgorithm &algo)
 {
     colorAlgorithm = algo;
+}
+
+void Detector::setColorPercentage(const int &p)
+{
+    colorPercentageGoal = p;
 }
 
 void Detector::setClassifierDuration(const int &newtime)
@@ -195,6 +202,8 @@ void Detector::ProcessFrame()
             detectingColorThread = QtConcurrent::run(this,&Detector::detectingColorFaces);
     }
 
+    ui->label_colorPercentage->setText("");
+
     Point_<int> c;
     bool imageColorMatch;
     for(unsigned int i=0; i < faces.size(); i++)
@@ -232,6 +241,16 @@ void Detector::ProcessFrame()
             if(detectingColorThread.isFinished())
                 detectingColorThread = QtConcurrent::run(this,&Detector::detectingColorFaces);
             if(Color_faces.size() > 0)
+                imageColorMatch = true;
+
+        } else if (colorAlgorithm == ColorAlgorithm::CLASS1_COLORPERCENTAGE){
+
+            Mat matBGR = frameBGR(face_i);
+            if(detectingColorThread.isFinished())
+                detectingColorThread = QtConcurrent::run(this,&Detector::getColorPercentage,matBGR);
+
+            ui->label_colorPercentage->setText("Color Percentage: " + QString::number(colorPercentage));
+            if(colorPercentage >= colorPercentageGoal)
                 imageColorMatch = true;
         }
 
@@ -293,11 +312,30 @@ void Detector::detectingColorFaces()
         Color_faces = temp_color_faces;
 }
 
+void Detector::getColorPercentage(const Mat &matBGR)
+{
+    int positivePixel = 0;
+    int totalPixel = 0;
+    unsigned char pixelColor;
+    setColor_gray(matBGR);
+    for(int i = 0; i < matBGR.cols; i++){
+        for(int j = 0; j < matBGR.rows; j++){
+            pixelColor = Color_gray.at<unsigned char>(cv::Point(i,j));
+            if(pixelColor == 255)
+                positivePixel++;
+            totalPixel++;
+        }
+    }
+    float percentage = 100 * ((float)positivePixel/(float)totalPixel);
+    colorPercentage = (int)percentage;
+}
+
 void Detector::setColor_gray(const Mat &imageBGR)
 {
     Mat imageHSV;
     cvtColor(imageBGR,imageHSV,CV_BGR2HSV);
-    if(!Color_haar_cascade.empty()){
+    if(!Color_haar_cascade.empty() ||
+            colorAlgorithm == ColorAlgorithm::CLASS1_COLORPERCENTAGE){
         if(Color_gray_mutex.tryLock()){
             cv::inRange(imageHSV,
                         cv::Scalar(Color_lowerBound[0],Color_lowerBound[1],Color_lowerBound[2]),
@@ -306,6 +344,19 @@ void Detector::setColor_gray(const Mat &imageBGR)
             Color_gray_mutex.unlock();
         }
     }
+}
+
+bool Detector::pixelColorRangeMatch(const Mat &image, const int &x, const int &y)
+{
+    cv::Vec3b pixelColor = image.at<cv::Vec3b>(cv::Point(x,y));
+    cv::Vec3b pixelColorHSV = ConvertColor(pixelColor,CV_BGR2HSV);
+
+    for(int i = 0; i < 3; i++){
+        if(pixelColorHSV.val[i] < Color_lowerBound[i] ||
+                pixelColorHSV.val[i] > Color_upperBound[i])
+            return false;
+    }
+    return true;
 }
 
 //enlarge or shrink the rect

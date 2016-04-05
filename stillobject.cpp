@@ -1,6 +1,17 @@
 #include "stillobject.h"
 #include "ui_stillobject.h"
 
+cv::Vec3b ConvertColor( cv::Vec3b src, int code)
+{
+    cv::Mat srcMat(1, 1, CV_8UC3 );
+    *srcMat.ptr< cv::Vec3b >( 0 ) = src;
+
+    cv::Mat resMat;
+    cv::cvtColor( srcMat, resMat, code);
+
+    return *resMat.ptr< cv::Vec3b >( 0 );
+}
+
 StillObject::StillObject(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::StillObject)

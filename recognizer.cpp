@@ -839,3 +839,8 @@ void Recognizer::on_comboBox_colorClassifierAlgorithm_currentIndexChanged(int in
 
     detector->setColorAlgorithm(c);
 }
+
+void Recognizer::on_spinBox_colorPercentage_valueChanged(int arg1)
+{
+    detector->setColorPercentage(arg1);
+}
