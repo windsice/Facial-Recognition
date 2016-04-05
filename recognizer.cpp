@@ -11,6 +11,12 @@ const QList<QSize> Recognizer::RESOLUTION = QList<QSize> ()
     << QSize(1920,1080)
     << QSize(2160,1440);
 
+const QList<QString> ColorAlgorithmString = QList<QString> ()
+        << "Not using any color detection"
+        << "Perform color classifer on entire image"
+        << "Perform color classifier only on identified object"
+        << "Calculate color percentage occupied on identified object";
+
 Recognizer::Recognizer(QWidget *parent) :
     QMainWindow(parent),
     settingsUI(new Ui::Recognizer)
@@ -19,6 +25,7 @@ Recognizer::Recognizer(QWidget *parent) :
     LoadSettings();
     Initialization();
     onOpSel();
+    this->adjustSize();
 }
 
 Recognizer::~Recognizer()
@@ -31,16 +38,15 @@ Recognizer::~Recognizer()
 //turn visibility based on user's intended operation
 void Recognizer::onOpSel(){
 
-
     settingsUI->groupBox_CamSet->setVisible(false);
     settingsUI->groupBox_preparation->setVisible(false);
     settingsUI->groupBox_ObjDet->setVisible(false);
     settingsUI->groupBox_FacialRec->setVisible(false);
     settingsUI->groupBox_prediction->setVisible(false);
-    settingsUI->groupBox_colorHasPath->setVisible(false);
+    settingsUI->groupBox_colorClassifier->setVisible(false);
     settingsUI->groupBox_XML_creator->setVisible(false);
-    emit settingsUI->lineEdit_colorClassifier->textChanged(
-                settingsUI->lineEdit_colorClassifier->text());
+    emit settingsUI->comboBox_colorClassifierAlgorithm->currentIndexChanged(
+                settingsUI->comboBox_colorClassifierAlgorithm->currentIndex());
 
     if(settingsUI->pushButton_liveFacial->isChecked()){
 
@@ -158,6 +164,9 @@ void Recognizer::Initialization()
         QString text = QString::number(a.width()) + " x " + QString::number(a.height());
         settingsUI->comboBox_CameraResolution->addItem(text,QVariant(a));
     }
+
+    foreach(QString s, ColorAlgorithmString)
+        settingsUI->comboBox_colorClassifierAlgorithm->addItem(s);
 
     img_height = img_width = 0;
     StackWidgetIndex = TAB_EMPTY;
@@ -695,7 +704,6 @@ void Recognizer::on_lineEdit_colorClassifier_textChanged(const QString &arg1)
         return;
 
     ColorClassifierPath = arg1;
-    settingsUI->groupBox_colorHasPath->setVisible(true);
 }
 
 void Recognizer::on_toolButton_colorClassifier_clicked()
@@ -706,7 +714,6 @@ void Recognizer::on_toolButton_colorClassifier_clicked()
     {
         ColorClassifierPath = tempPath;
         settingsUI->lineEdit_colorClassifier->setText(ColorClassifierPath);
-
     }
 }
 
@@ -794,4 +801,41 @@ void Recognizer::on_toolButton_XMLObjectFolder_clicked()
     xml_creator->SetObjectPath(ObjectFolder);
     settingsUI->lineEdit_XMLObjectFolder->setText(ObjectPath);
 
+}
+
+
+void Recognizer::on_comboBox_colorClassifierAlgorithm_currentIndexChanged(int index)
+{
+    if(index == ColorAlgorithm::NOTUSE){
+        settingsUI->groupBox_colorClassifier->setVisible(false);
+        return;
+    } else if (index == ColorAlgorithm::CLASS1_COLORPERCENTAGE){
+        settingsUI->label_colorPercentage->setVisible(true);
+        settingsUI->spinBox_colorPercentage->setVisible(true);
+        settingsUI->label_colorClassifier->setVisible(false);
+        settingsUI->lineEdit_colorClassifier->setVisible(false);
+        settingsUI->toolButton_colorClassifier->setVisible(false);
+    } else {
+        settingsUI->label_colorPercentage->setVisible(false);
+        settingsUI->spinBox_colorPercentage->setVisible(false);
+        settingsUI->label_colorClassifier->setVisible(true);
+        settingsUI->lineEdit_colorClassifier->setVisible(true);
+        settingsUI->toolButton_colorClassifier->setVisible(true);
+    }
+
+    settingsUI->groupBox_colorClassifier->setVisible(true);
+
+    ColorAlgorithm c;
+
+    switch(index){
+        case 1: c = CLASS2_ENTIRE;
+            break;
+        case 2: c = CLASS2_RECTONLY;
+            break;
+        case 3: c = CLASS1_COLORPERCENTAGE;
+            break;
+        default: c = NOTUSE;
+    }
+
+    detector->setColorAlgorithm(c);
 }

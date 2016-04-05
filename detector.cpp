@@ -70,6 +70,11 @@ void Detector::setCameraResolution(const QSize &size){
     }
 }
 
+void Detector::setColorAlgorithm(const ColorAlgorithm &algo)
+{
+    colorAlgorithm = algo;
+}
+
 void Detector::setClassifierDuration(const int &newtime)
 {
     classifierDurationTime = newtime;
@@ -158,9 +163,16 @@ int Detector::getFrameRate()
     return camera->get(CV_CAP_PROP_FPS);
 }
 
+/*
+    For color classifier:
+    1. entire picture, initial img, thread before loop,
+        comparision done in loop.
+    2. targeted only, initial img, thread, comparison all in loop.
+    3. color percentage, initial img, no thread, cal all in loop.
+*/
 void Detector::ProcessFrame()
 {
-    Mat frameBGR,frameHSV,frameRGB;
+    Mat frameBGR,frameRGB;
     Mat img,img_resized;
     Captured_pic = new QLabel;
     camera->read(frameBGR);
@@ -168,28 +180,20 @@ void Detector::ProcessFrame()
         cvtColor(frameBGR,gray,CV_BGR2GRAY);
         gray_mutex.unlock();
     }
-    cvtColor(frameBGR,frameHSV,CV_BGR2HSV);
-    if(!Color_haar_cascade.empty()){
-        if(Color_gray_mutex.tryLock()){
-            cv::inRange(frameHSV,
-                        cv::Scalar(Color_lowerBound[0],Color_lowerBound[1],Color_lowerBound[2]),
-                        cv::Scalar(Color_upperBound[0],Color_upperBound[1],Color_upperBound[2]),
-                        Color_gray);
-            Color_gray_mutex.unlock();
-        }
-    }
 
-    if(ui->checkBox_imageInGray->isChecked()){
+    if(ui->checkBox_imageInGray->isChecked())
         cvtColor(gray,frameRGB,CV_GRAY2RGB);
-    }
     else
         cvtColor(frameBGR,frameRGB,CV_BGR2RGB);
 
     if(detectingThread.isFinished())
         detectingThread = QtConcurrent::run(this,&Detector::detectingFaces);
 
-    if(detectingColorThread.isFinished())
-        detectingColorThread = QtConcurrent::run(this,&Detector::detectingColorFaces);
+    if(colorAlgorithm == ColorAlgorithm::CLASS2_ENTIRE){
+        setColor_gray(frameBGR);
+        if(detectingColorThread.isFinished())
+            detectingColorThread = QtConcurrent::run(this,&Detector::detectingColorFaces);
+    }
 
     Point_<int> c;
     bool imageColorMatch;
@@ -206,15 +210,31 @@ void Detector::ProcessFrame()
 
         Rect Color_face_i;
         imageColorMatch = false;
-        for(unsigned int i=0;i < Color_faces.size(); i++){
-            Color_face_i = Color_faces[i];
-            c.x = (Color_face_i.tl().x+Color_face_i.br().x)/2;
-            c.y = (Color_face_i.tl().y+Color_face_i.br().y)/2;
-            if(face_i.contains(c)){
-                imageColorMatch = true;
-                break;
+
+        if(colorAlgorithm == ColorAlgorithm::CLASS2_ENTIRE){
+            // if two classifier identified the object at same location
+            // meanning that is a match.
+            for(unsigned int i=0;i < Color_faces.size(); i++){
+                Color_face_i = Color_faces[i];
+                c.x = (Color_face_i.tl().x+Color_face_i.br().x)/2;
+                c.y = (Color_face_i.tl().y+Color_face_i.br().y)/2;
+                if(face_i.contains(c)){
+                    imageColorMatch = true;
+                    break;
+                }
             }
+        } else if (colorAlgorithm == ColorAlgorithm::CLASS2_RECTONLY){
+            // if the color classifier detected object within the rect
+            // meanning that is a match.
+            Rect enRargedRect = transformRect(frameBGR,face_i,1.2);
+            Mat matBGR = frameBGR(enRargedRect);
+            setColor_gray(matBGR);
+            if(detectingColorThread.isFinished())
+                detectingColorThread = QtConcurrent::run(this,&Detector::detectingColorFaces);
+            if(Color_faces.size() > 0)
+                imageColorMatch = true;
         }
+
         if(imageColorMatch)
             rectangle(frameRGB,face_i,CV_RGB(255,0,0),1);
         else
@@ -273,9 +293,26 @@ void Detector::detectingColorFaces()
         Color_faces = temp_color_faces;
 }
 
-//enlarge or shrink the rect
-Rect Detector::transformRect(Mat image, Rect rect, float percentage)
+void Detector::setColor_gray(const Mat &imageBGR)
 {
+    Mat imageHSV;
+    cvtColor(imageBGR,imageHSV,CV_BGR2HSV);
+    if(!Color_haar_cascade.empty()){
+        if(Color_gray_mutex.tryLock()){
+            cv::inRange(imageHSV,
+                        cv::Scalar(Color_lowerBound[0],Color_lowerBound[1],Color_lowerBound[2]),
+                        cv::Scalar(Color_upperBound[0],Color_upperBound[1],Color_upperBound[2]),
+                        Color_gray);
+            Color_gray_mutex.unlock();
+        }
+    }
+}
+
+//enlarge or shrink the rect
+Rect Detector::transformRect(const Mat &image, const Rect &rect, float percentage)
+{
+    qDebug() << "entire mat: " << QString::number(image.cols) << " x " << QString::number(image.rows);
+    qDebug() << "Rect: " << QString("%1 %2 %3 %4").arg(rect.x).arg(rect.y).arg(rect.width).arg(rect.height);
     int newWidth,newHeight;
     int newX,newY;
     newWidth = rect.width * percentage;
@@ -285,11 +322,18 @@ Rect Detector::transformRect(Mat image, Rect rect, float percentage)
 
     if(newX + newWidth > image.cols){
         newWidth -= newX + newWidth - image.cols;
+    } else if (newX < 0){
+        newWidth += newX;
+        newX = 0;
     }
     if(newY + newHeight > image.rows){
         newHeight -= newY + newHeight - image.rows;
+    } else if (newY < 0){
+        newHeight += newY;
+        newY = 0;
     }
     Rect newRect(newX,newY,newWidth,newHeight);
+    qDebug() << "newRect: " << QString("%1 %2 %3 %4").arg(newRect.x).arg(newRect.y).arg(newRect.width).arg(newRect.height);
     return newRect;
 }
 

@@ -20,6 +20,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/objdetect/objdetect.hpp"
 
+enum ColorAlgorithm {NOTUSE, CLASS2_ENTIRE, CLASS2_RECTONLY, CLASS1_COLORPERCENTAGE};
+
 using namespace std;
 using namespace cv;
 
@@ -43,6 +45,7 @@ public:
     void setImageWidth(const int&);
     void setImageHeight(const int&);
     void setCameraResolution(const QSize&);
+    void setColorAlgorithm(const ColorAlgorithm&);
 
     void setClassifierDuration(const int &);
     void setUpdatingTime(const int&);
@@ -75,7 +78,8 @@ private:
     String FacialPrediction(Mat face_resized);
     void detectingFaces();
     void detectingColorFaces();
-    Rect transformRect(Mat image, Rect rect, float percentage);
+    void setColor_gray(const Mat &imageBGR);
+    Rect transformRect(const Mat &image, const Rect &rect, float percentage);
     void totalSubjectCount();
     void SaveSettings();
     void LoadSettings();
@@ -118,6 +122,8 @@ private:
     QSize ScreenSize;
     QTimer *timer;
     QTimer *clearFacesTimer;
+
+    ColorAlgorithm colorAlgorithm;
 
     QMutex gray_mutex;
     Mat gray;

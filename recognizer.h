@@ -44,6 +44,7 @@ public:
     void read_csv(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';');
 
     enum TabIndex {TAB_EMPTY,TAB_STILLFACIAL,TAB_LIVEFACIAL,TAB_STILLOBJECT,TAB_XMLCREATOR};
+
     static const QList<QSize> RESOLUTION;
 
 private slots:
@@ -108,6 +109,8 @@ private slots:
     void on_lineEdit_XMLObjectName_textChanged(const QString &arg1);
 
     void on_toolButton_XMLObjectFolder_clicked();
+
+    void on_comboBox_colorClassifierAlgorithm_currentIndexChanged(int index);
 
 private:
     //change layout based on the operation
