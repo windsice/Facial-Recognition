@@ -76,12 +76,15 @@ private slots:
     void on_RootPath_toolButton_clicked();
 
 private:
+    bool areRectsOverlapped(const Rect &a, const Rect &b);
+    bool objectMatchColor(const Rect &object);
+
     void startTimers();
     void stopTimers();
     String FacialPrediction(Mat face_resized);
     void detectingFaces();
     void detectingColorFaces();
-    void getColorPercentage(const Mat &image);
+    void getColorPercentage(const Mat &image, const Rect &rect);
     void setColor_gray(const Mat &imageBGR);
     bool pixelColorRangeMatch(const Mat &image, const int &x, const int &y);
     Rect transformRect(const Mat &image, const Rect &rect, float percentage);
@@ -130,6 +133,7 @@ private:
 
     ColorAlgorithm colorAlgorithm;
     int colorPercentageGoal;
+    Rect colorPercentageRect;
     int colorPercentage;
 
     QMutex gray_mutex;

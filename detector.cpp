@@ -204,7 +204,6 @@ void Detector::ProcessFrame()
 
     ui->label_colorPercentage->setText("");
 
-    Point_<int> c;
     bool imageColorMatch;
     for(unsigned int i=0; i < faces.size(); i++)
     {
@@ -217,21 +216,10 @@ void Detector::ProcessFrame()
         int pos_x = std::max(face_i.tl().x - 10,0);
         int pos_y = std::max(face_i.tl().y - 10,0);
 
-        Rect Color_face_i;
         imageColorMatch = false;
-
         if(colorAlgorithm == ColorAlgorithm::CLASS2_ENTIRE){
-            // if two classifier identified the object at same location
-            // meanning that is a match.
-            for(unsigned int i=0;i < Color_faces.size(); i++){
-                Color_face_i = Color_faces[i];
-                c.x = (Color_face_i.tl().x+Color_face_i.br().x)/2;
-                c.y = (Color_face_i.tl().y+Color_face_i.br().y)/2;
-                if(face_i.contains(c)){
-                    imageColorMatch = true;
-                    break;
-                }
-            }
+            imageColorMatch = objectMatchColor(face_i);
+
         } else if (colorAlgorithm == ColorAlgorithm::CLASS2_RECTONLY){
             // if the color classifier detected object within the rect
             // meanning that is a match.
@@ -240,18 +228,20 @@ void Detector::ProcessFrame()
             setColor_gray(matBGR);
             if(detectingColorThread.isFinished())
                 detectingColorThread = QtConcurrent::run(this,&Detector::detectingColorFaces);
-            if(Color_faces.size() > 0)
-                imageColorMatch = true;
+            imageColorMatch = objectMatchColor(face_i);
 
         } else if (colorAlgorithm == ColorAlgorithm::CLASS1_COLORPERCENTAGE){
 
             Mat matBGR = frameBGR(face_i);
             if(detectingColorThread.isFinished())
-                detectingColorThread = QtConcurrent::run(this,&Detector::getColorPercentage,matBGR);
+                detectingColorThread = QtConcurrent::run(this,&Detector::getColorPercentage,matBGR,face_i);
 
             ui->label_colorPercentage->setText("Color Percentage: " + QString::number(colorPercentage));
-            if(colorPercentage >= colorPercentageGoal)
+            if(colorPercentage >= colorPercentageGoal &&
+                    areRectsOverlapped(colorPercentageRect,face_i)){
                 imageColorMatch = true;
+                colorPercentage = 0;
+            }
         }
 
         if(imageColorMatch)
@@ -312,7 +302,7 @@ void Detector::detectingColorFaces()
         Color_faces = temp_color_faces;
 }
 
-void Detector::getColorPercentage(const Mat &matBGR)
+void Detector::getColorPercentage(const Mat &matBGR, const Rect &rect)
 {
     int positivePixel = 0;
     int totalPixel = 0;
@@ -328,6 +318,7 @@ void Detector::getColorPercentage(const Mat &matBGR)
     }
     float percentage = 100 * ((float)positivePixel/(float)totalPixel);
     colorPercentage = (int)percentage;
+    colorPercentageRect = rect;
 }
 
 void Detector::setColor_gray(const Mat &imageBGR)
@@ -362,8 +353,6 @@ bool Detector::pixelColorRangeMatch(const Mat &image, const int &x, const int &y
 //enlarge or shrink the rect
 Rect Detector::transformRect(const Mat &image, const Rect &rect, float percentage)
 {
-    qDebug() << "entire mat: " << QString::number(image.cols) << " x " << QString::number(image.rows);
-    qDebug() << "Rect: " << QString("%1 %2 %3 %4").arg(rect.x).arg(rect.y).arg(rect.width).arg(rect.height);
     int newWidth,newHeight;
     int newX,newY;
     newWidth = rect.width * percentage;
@@ -384,7 +373,6 @@ Rect Detector::transformRect(const Mat &image, const Rect &rect, float percentag
         newY = 0;
     }
     Rect newRect(newX,newY,newWidth,newHeight);
-    qDebug() << "newRect: " << QString("%1 %2 %3 %4").arg(newRect.x).arg(newRect.y).arg(newRect.width).arg(newRect.height);
     return newRect;
 }
 
@@ -492,6 +480,27 @@ void Detector::on_RootPath_toolButton_clicked()
         totalSubjectCount();
     }
     SaveSettings();
+}
+
+bool Detector::areRectsOverlapped(const Rect &a, const Rect &b)
+{
+    Point_<int> aCenter;
+    aCenter.x = (a.tl().x+a.br().x)/2;
+    aCenter.y = (a.tl().y+a.br().y)/2;
+    if(b.contains(aCenter))
+        return true;
+    else
+        return false;
+}
+
+bool Detector::objectMatchColor(const Rect &object)
+{
+    for(unsigned int i=0;i < Color_faces.size(); i++){
+        if(areRectsOverlapped(object,Color_faces[i])){
+            return true;
+        }
+    }
+    return false;
 }
 
 void Detector::startTimers()
