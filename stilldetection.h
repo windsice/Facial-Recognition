@@ -74,6 +74,7 @@ protected:
     double scaleFactor;
     int minNeighbors;
     QFuture<void> performingThread;
+    bool grayscaleDisplay;
 };
 
 

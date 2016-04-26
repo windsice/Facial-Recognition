@@ -46,6 +46,8 @@ private slots:
 
     void on_pushButton_outputResults_clicked();
 
+    void on_checkBox_grayscale_clicked(bool checked);
+
 private:
     void displayOnGUI();
     void initFolderIterator();

@@ -69,8 +69,6 @@ private:
     QString tempCascadePath;
     void write();
 
-    void mouseDoubleClickEvent(QMouseEvent *event);
-    void resizeEvent(QResizeEvent *event);
     QDirIterator *pictureIt = NULL;
     void updatePictureIterator();
     void displayPositiveImage();
@@ -79,10 +77,6 @@ private:
     void haarTraining();
     void resetCascadeFolder();
 
-    void mousePressEvent(QMouseEvent *event);
-    void mouseReleaseEvent(QMouseEvent *event);
-    void mouseMoveEvent(QMouseEvent *event);
-
     QPoint qpPixmapInitial,qpPixmapFinal,qpPixmapDimension,qpMainInitial,qpMainFinal;
     int positiveImageLoaded;//avoid crashes
     double pictureRatio;
@@ -90,6 +84,7 @@ private:
     int NumberOfSelectedObject;
     int NumberOfPositiveImage;
     int NumberOfPositiveImageDisplayed;
+    int numberofn;
     QString positiveInfoFileName;
     QString negativeInfoFileName;
     bool mouseIsOnPixmap;
@@ -100,6 +95,11 @@ QProcess *haarTrain;
 
 protected:
     void paintEvent(QPaintEvent *p);
+    void mouseDoubleClickEvent(QMouseEvent *event);
+    void resizeEvent(QResizeEvent *event);
+    void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
 
 };
 

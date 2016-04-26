@@ -35,7 +35,7 @@ XML_creator::~XML_creator()
 //display negative image list and write the list to a ****bg.txt file
 void XML_creator::get_negative_image_list(){
     QDirIterator it(negativeFolderPath,QDir::Files);
-    int numberofn = 0;
+    numberofn = 0;
     negativeInfoFileName = QString("%1/%2").arg(targetPath.absolutePath()).arg("neg.txt");
 
     QFile file;
@@ -79,10 +79,10 @@ void XML_creator::on_pushButton_sample_clicked(){
     // check if there's file exist before, if so, append to it instead of making new file.
     QFile file;
     file.setFileName(positiveInfoFileName);
+    NumberOfPositiveImageDisplayed = 0;
     if(!file.exists()){
         statusBar->showMessage("New Object");
     } else if(file.open(QIODevice::ReadOnly | QIODevice::Text)){
-        statusBar->showMessage("Existed Object");
         QTextStream in(&file);
         QString line;
         while (!in.atEnd()) {
@@ -91,6 +91,7 @@ void XML_creator::on_pushButton_sample_clicked(){
             pictureIt->next();
         }
         NumberOfPositiveImageDisplayed = processedImageNumber;
+        statusBar->showMessage("Existed " + QString::number(NumberOfPositiveImageDisplayed) + " objects in pos.txt");
 
     } else {
         QMessageBox::critical(this,"Error","pos.txt exists, but is not readable");
@@ -126,6 +127,7 @@ void XML_creator::mouseDoubleClickEvent(QMouseEvent *event){
           && !stopAllOtherFunction){
         if(pictureIt == NULL){
             event->ignore();
+            qDebug() << "picture null";
             return;
         }
         QFile file(positiveInfoFileName);
@@ -138,8 +140,8 @@ void XML_creator::mouseDoubleClickEvent(QMouseEvent *event){
         file.close();
 
         if(pictureIt->hasNext() ){
-        event->accept();
-        displayPositiveImage();
+            event->accept();
+            displayPositiveImage();
         }
 
         PositiveInfo.clear();
@@ -169,7 +171,6 @@ void XML_creator::resizeEvent(QResizeEvent *event){
 //display a positve image on the XML_creator
 void XML_creator::displayPositiveImage(){
     if(pictureIt->hasNext()){
-
         positiveimgpath = pictureIt->next();
         posdisplay = QImage(positiveimgpath);
 
@@ -190,20 +191,25 @@ void XML_creator::mousePressEvent(QMouseEvent *event){
         qpPixmapDimension.setY(0);
         qpPixmapInitial = event->pos() - getPixmapTopleftPos();
         qpMainInitial = event->pos();
+        statusBar->showMessage("");
     }
     if(!stopAllOtherFunction&&event->button()==Qt::RightButton &&qpPixmapDimension.x()!=0 &&qpPixmapDimension.y()!=0){
+        qpPixmapDimension.setX(0);
+        qpPixmapDimension.setY(0);
+        qpPixmapInitial = event->pos() - getPixmapTopleftPos();
+        qpMainInitial = event->pos();
 
-            QString cPositiveInfo = QString("%1 %2 %3 %4 ")
-                    .arg((int)(qpPixmapInitial.x()*pictureRatio))
-                    .arg((int)(qpPixmapInitial.y()*pictureRatio))
-                    .arg((int)(qpPixmapDimension.x()*pictureRatio))
-                    .arg((int)(qpPixmapDimension.y()*pictureRatio));
+        QString cPositiveInfo = QString("%1 %2 %3 %4 ")
+                .arg((int)(qpPixmapInitial.x()*pictureRatio))
+                .arg((int)(qpPixmapInitial.y()*pictureRatio))
+                .arg((int)(qpPixmapDimension.x()*pictureRatio))
+                .arg((int)(qpPixmapDimension.y()*pictureRatio));
 
-            PositiveInfo = PositiveInfo + cPositiveInfo;
-            NumberOfSelectedObject++;
-           if(NumberOfPositiveImageDisplayed < NumberOfPositiveImage){
-                statusBar->showMessage("[x y width height] -> [" +cPositiveInfo+"]",5000);
-           }
+        PositiveInfo = PositiveInfo + cPositiveInfo;
+        NumberOfSelectedObject++;
+       if(NumberOfPositiveImageDisplayed < NumberOfPositiveImage){
+           statusBar->showMessage("[x y width height] -> [" +cPositiveInfo+"]",5000);
+       }
     }
 }
 
@@ -352,8 +358,8 @@ void XML_creator::haarTraining()
     haarTrainArgument<< "-data"<< tempCascadePath
                      << "-vec"<< vecPath
                      << "-bg" << negativeInfoFileName
-                     << "-npos"<< "200"
-                     << "-nneg"<< "200"
+                     << "-npos"<< QString::number(NumberOfPositiveImageDisplayed)
+                     << "-nneg"<< QString::number(numberofn)
                      << "-nstages"<< "15"
                      << "-mem"<<"1024"
                      << "-mode"<< "ALL"

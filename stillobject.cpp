@@ -77,8 +77,6 @@ void StillObject::mouseDoubleClickEvent(QMouseEvent *event){
         PicturePath = folderIt->next();
         displayOnGUI();
     }
-
-
 }
 
 void StillObject::mousePressEvent(QMouseEvent *event)
@@ -184,6 +182,12 @@ void StillObject::performDetection(){
     objects.clear();
     haar_cascade.detectMultiScale(mat_picture_gray,objects,scaleFactor,minNeighbors);
 
+    if(grayscaleDisplay){
+        cv::Mat temp;
+        cv::cvtColor(mat_picture_rgb,temp,CV_RGB2GRAY);
+        cv::cvtColor(temp,mat_picture_rgb,CV_GRAY2RGB);
+    }
+
     for(unsigned int i = 0; i < objects.size(); i++){
         cv::rectangle(mat_picture_rgb,objects[i],CV_RGB(0,255,0),1);
     }
@@ -266,6 +270,7 @@ QImage StillObject::colorPicker(cv::Mat image)
                                   mat_colorResult.rows,
                                   mat_colorResult.step,
                                   QImage::Format_RGB888);
+
     return *imgForColorRange;
 }
 
@@ -343,5 +348,11 @@ void StillObject::on_pushButton_outputResults_clicked()
     ui->label_ObjectCount->setText("");
 
     QMessageBox::information(this,"Output to folder","done");
+}
 
+void StillObject::on_checkBox_grayscale_clicked(bool checked)
+{
+    grayscaleDisplay = checked;
+    if(folderIt != NULL)
+        displayOnGUI();
 }

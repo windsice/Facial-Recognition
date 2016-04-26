@@ -245,7 +245,7 @@ void Detector::ProcessFrame()
         }
 
         if(imageColorMatch)
-            rectangle(frameRGB,face_i,CV_RGB(255,0,0),1);
+            rectangle(frameRGB,face_i,CV_RGB(0,0,255),1);
         else
             rectangle(frameRGB,face_i,CV_RGB(0,255,0),1);
 
